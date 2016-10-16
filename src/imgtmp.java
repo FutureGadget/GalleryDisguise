@@ -1,6 +1,5 @@
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,23 +40,6 @@ public class imgtmp {
 //		File f=new File("./cat.jpg");
 //		BufferedImage image = ImageIO.read(f);
 		
-		File f=new File("C:\\Users\\Gunhwi\\workspace\\InfoSecurity_Term\\cat.jpg");
-		BufferedImage image = ImageIO.read(f);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ImageIO.write(image, "jpg", out);
-		
-		data = out.toByteArray();
-		String str = "";
-//		for (int i = 0; i < data.length; i++) {
-//			str = byteArrayToBinaryString(data);
-//			//System.out.print(str+" ");
-//			System.out.print(data[i]+" ");
-//		}
-	
-		ImageIO.read(new ByteArrayInputStream(data));
-		ImageIO.write(image, "png", new File("./result"));
-	
-
 		
 //		data = out.toByteArray();
 //		String str = "";
@@ -86,10 +68,8 @@ public class imgtmp {
 			}
 		}
 		return files;
-
 	}
 	
-
 	public static String byteArrayToBinaryString(byte[] b){
 	    StringBuilder sb=new StringBuilder();
 	    for(int i=0; i<b.length; ++i){
