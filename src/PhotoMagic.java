@@ -20,6 +20,7 @@ public class PhotoMagic {
         //  from the command-line and encrypt the picture with the LFSR
 		int picture[][] = ImageData.imageData("test/cat.jpg");
 		transform(picture, "00111000111100010000110101001", 8);
+		transform(picture, "00111000111100010000110101001", 8);
 		ImageData.show(picture);
 	}
 }
