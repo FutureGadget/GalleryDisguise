@@ -16,6 +16,12 @@ public class LFSR {
 		//  simulate one step and return the least significant (rightmost) bit as 0 or 1
 	}
 	public static int generate(int k) {
+		int key = 0;
+		for (int i = 0; i < k; ++i) {
+			key = key << 1;
+			key += step();
+		}
+		return key;
 		//  simulate k steps and return k-bit integer
 	}
 	public static String string() {
