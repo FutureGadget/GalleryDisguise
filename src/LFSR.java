@@ -8,7 +8,7 @@ public class LFSR {
 		if (seed.length() - tap < 0) return false;
 		initial_seed = seed;
 		current_seed = seed;
-		tap_index = seed.length() - tap;
+		tap_index = seed.length() - tap - 1;
 		return true;
 	}
 	public static int step() {
@@ -17,13 +17,27 @@ public class LFSR {
 	}
 	public static int generate(int k) {
 		//  simulate k steps and return k-bit integer
+		int tmp;
+		int result = 0;
+		for (int i=0; i<k; i++){
+			tmp=step();
+			current_seed = current_seed.substring(1, current_seed.length()) + tmp;
+			result = result << 1;
+			result += tmp;
+		}
+		return result;
 	}
 	public static String string() {
 		//  return a string representation of the LFSR
-		String tmp=null;
+
 		return current_seed;
 	}
 	public static void main(String[] args) {
 		//  test all of the methods in LFSR
+		LFSR.init("01101000010", 8);
+		for (int i = 0; i < 10; i++) {
+		    int r = LFSR.generate(5);
+		    System.out.println(LFSR.string() + " " + r);
+		}
 	}
 }
