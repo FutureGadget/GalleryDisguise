@@ -20,6 +20,8 @@ public class LFSR {
 	}
 	public static String string() {
 		//  return a string representation of the LFSR
+		String tmp=null;
+		return tmp;
 	}
 	public static void main(String[] args) {
 		//  test all of the methods in LFSR
