@@ -29,7 +29,6 @@ public class LFSR {
 	}
 	public static String string() {
 		//  return a string representation of the LFSR
-
 		return current_seed;
 	}
 	public static void main(String[] args) {
