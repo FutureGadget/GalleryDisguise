@@ -3,6 +3,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -10,8 +11,21 @@ public class imgtmp {
 	
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
+		final String originalPath = "C:\\Users\\dw\\workspace\\Proto_GallaryDisguise\\bin\\Gallery";
 		byte[] data = null;
 		byte[] encrypt = null;
+		
+		/**
+		 * Iterate over image files.
+		 * 1. Read image file to a byte stream.
+		 * 2. Encrypt.
+		 * 3. Write out.
+		 */
+		final File folder = new File(originalPath);
+		ArrayList<String> paths = listFiles(folder);
+		for (String s : paths) {
+			// Process per image files.
+		}
 		
 		File f=new File("./cat.jpg");
 		BufferedImage image = ImageIO.read(f);
@@ -32,8 +46,20 @@ public class imgtmp {
 		ImageIO.write(image, "jpg", new File("./result"));
 		//System.out.println(str);
 	}
-	
-	
+	/**
+	 * Get absolute paths of files under a given folder.
+	 * @param folder
+	 * @return ArrayList of file paths under the given folder.
+	 */
+	public static ArrayList<String> listFiles(final File folder) {
+		ArrayList<String> files = new ArrayList<>();
+		for (final File fileEntry : folder.listFiles()) {
+			if (!fileEntry.isDirectory()) {
+				files.add(fileEntry.getAbsolutePath());
+			}
+		}
+		return files;
+	}
 	
 	public static String byteArrayToBinaryString(byte[] b){
 	    StringBuilder sb=new StringBuilder();
