@@ -8,4 +8,4 @@
 
 #Encryption Algorithm :
   1. Linear Feedback Shift Register Algorithm.
-  2. Currently, encryption parameters are statically set.
+  2. Currently, encryption parameters are statically set. (Key, number of shifts, tap bits)
