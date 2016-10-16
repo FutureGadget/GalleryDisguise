@@ -1,8 +1,11 @@
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -10,8 +13,33 @@ public class imgtmp {
 	
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		byte[] data = null;
-		byte[] encrypt = null;
+		final String originalPath = "test";
+		byte[] data = new byte[1024];
+		int len;
+//		byte[] encrypt = null;
+		
+		/**
+		 * Iterate over image files.
+		 * 1. Read image file to a byte stream.
+		 * 2. Encrypt.
+		 * 3. Write out.
+		 */
+		final File folder = new File(originalPath);
+		ArrayList<String> paths = listFiles(folder);
+		for (String s : paths) {
+			DataInputStream in = new DataInputStream(new FileInputStream(s));
+			while((len = in.read(data)) > 0) {
+				for (int i = 0; i < len; ++i) {
+					System.out.format("%02X", data[i]);
+				}
+			}
+//			BufferedImage image = ImageIO.read(file);
+//			ByteArrayOutputStream out = new ByteArrayOutputStream();
+//			ImageIO.write(image, "jpg", out);
+		}
+		
+//		File f=new File("./cat.jpg");
+//		BufferedImage image = ImageIO.read(f);
 		
 		File f=new File("C:\\Users\\Gunhwi\\workspace\\InfoSecurity_Term\\cat.jpg");
 		BufferedImage image = ImageIO.read(f);
@@ -29,6 +57,36 @@ public class imgtmp {
 		ImageIO.read(new ByteArrayInputStream(data));
 		ImageIO.write(image, "png", new File("./result"));
 	
+
+		
+//		data = out.toByteArray();
+//		String str = "";
+//		for (int i = 0; i < data.length; i++) {
+//			str = byteArrayToBinaryString(data);
+//			System.out.print(str+" ");
+			//System.out.print(data[i]+" ");
+//		}
+//		for(int i=0; i<str.length(); i++){
+//			encrypt=binaryStringToByteArray(str);
+//		}
+//		ImageIO.read(new ByteArrayInputStream(encrypt));
+//		ImageIO.write(image, "jpg", new File("./result"));
+		//System.out.println(str);
+	}
+	/**
+	 * Get absolute paths of files under a given folder.
+	 * @param folder
+	 * @return ArrayList of file paths under the given folder.
+	 */
+	public static ArrayList<String> listFiles(final File folder) {
+		ArrayList<String> files = new ArrayList<>();
+		for (final File fileEntry : folder.listFiles()) {
+			if (!fileEntry.isDirectory()) {
+				files.add(fileEntry.getAbsolutePath());
+			}
+		}
+		return files;
+
 	}
 	
 
