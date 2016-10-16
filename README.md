@@ -1,6 +1,7 @@
 # Simple_Encryption Native Java Version.
+## Image Encryption / Decryption Module.
 
-##Encrypt files under the following directory : final String originalPath = "test" (imgtmp.java)
+###Encrypt files under the following directory : final String originalPath = "test" (imgtmp.java)
 
 #Entry Point : 
   1. Use main method in the "imgtmp.java".
