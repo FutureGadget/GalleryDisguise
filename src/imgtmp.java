@@ -1,20 +1,12 @@
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import javax.imageio.ImageIO;
 
 public class imgtmp {
 	
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
 		final String originalPath = "test";
-		byte[] data = new byte[1024];
-		int len;
 //		byte[] encrypt = null;
 		
 		/**
@@ -26,34 +18,11 @@ public class imgtmp {
 		final File folder = new File(originalPath);
 		ArrayList<String> paths = listFiles(folder);
 		for (String s : paths) {
-			DataInputStream in = new DataInputStream(new FileInputStream(s));
-			while((len = in.read(data)) > 0) {
-				for (int i = 0; i < len; ++i) {
-					System.out.format("%02X ", data[i]);
-				}
-			}
-//			BufferedImage image = ImageIO.read(file);
-//			ByteArrayOutputStream out = new ByteArrayOutputStream();
-//			ImageIO.write(image, "jpg", out);
+			int picture[][] = ImageData.imageData(s);
+			Picture.setImage(picture);
+			ImageData.show(picture);
+//			PhotoMagic.transform(picture, "00111000111100010000110101001", 8);
 		}
-		
-//		File f=new File("./cat.jpg");
-//		BufferedImage image = ImageIO.read(f);
-		
-		
-//		data = out.toByteArray();
-//		String str = "";
-//		for (int i = 0; i < data.length; i++) {
-//			str = byteArrayToBinaryString(data);
-//			System.out.print(str+" ");
-			//System.out.print(data[i]+" ");
-//		}
-//		for(int i=0; i<str.length(); i++){
-//			encrypt=binaryStringToByteArray(str);
-//		}
-//		ImageIO.read(new ByteArrayInputStream(encrypt));
-//		ImageIO.write(image, "jpg", new File("./result"));
-		//System.out.println(str);
 	}
 	/**
 	 * Get absolute paths of files under a given folder.

@@ -59,7 +59,8 @@ public final class Picture implements ActionListener {
     private String filename;                   // name of file
     private boolean isOriginUpperLeft = true;  // location of origin
     private int width, height;                 // width and height
-
+    
+    private static int[][] picture;				   // image to transform
    /**
      * Create a blank w-by-h picture, where each pixel is black.
      */
@@ -69,6 +70,15 @@ public final class Picture implements ActionListener {
         image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         // set to TYPE_INT_ARGB to support transparency
         filename = w + "-by-" + h;
+    }
+    
+    public static void setImage(int[][] image) {
+    	picture = new int[image.length][image[0].length];
+    	for (int i = 0; i < image.length; ++i) {
+    		for (int j = 0; j < image[0].length; ++j) {
+    			picture[i][j] = image[i][j];
+    		}
+    	}
     }
 
    /**
@@ -150,8 +160,7 @@ public final class Picture implements ActionListener {
             JMenu menu = new JMenu("File");
             menuBar.add(menu);
             JMenuItem menuItem1 = new JMenuItem(" Save...   ");
-            JMenuItem menuItem2 = new JMenuItem(" Encrypt...   ");
-            JMenuItem menuItem3 = new JMenuItem(" Decrypt...   ");
+            JMenuItem menuItem2 = new JMenuItem(" En/De-crypt   ");
             
             menuItem1.addActionListener(this);
             menuItem1.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
@@ -162,23 +171,14 @@ public final class Picture implements ActionListener {
              */
             menuItem2.addActionListener(new ActionListener() {
             	public void actionPerformed(ActionEvent ae) {
-            		
+            		PhotoMagic.transform(picture, "00111000111100010000110101001", 8);
+            		ImageData.show(picture);
+            		frame.dispose();
             	}
             });
-            
-            /**
-             * Define action when "decrypt" button is clicked.
-             */
-            menuItem3.addActionListener(new ActionListener() {
-            	public void actionPerformed(ActionEvent ae) {
-            		
-            	}
-            });
-            
             
             menu.add(menuItem1);
             menu.add(menuItem2);
-            menu.add(menuItem3);
             frame.setJMenuBar(menuBar);
 
 
