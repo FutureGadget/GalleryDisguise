@@ -13,28 +13,25 @@ public class imgtmp {
 		byte[] data = null;
 		byte[] encrypt = null;
 		
-		File f=new File("./cat.jpg");
+		File f=new File("C:\\Users\\Gunhwi\\workspace\\InfoSecurity_Term\\cat.jpg");
 		BufferedImage image = ImageIO.read(f);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ImageIO.write(image, "jpg", out);
 		
 		data = out.toByteArray();
 		String str = "";
-		for (int i = 0; i < data.length; i++) {
-			str = byteArrayToBinaryString(data);
-			System.out.print(str+" ");
-			//System.out.print(data[i]+" ");
-		}
-		for(int i=0; i<str.length(); i++){
-			encrypt=binaryStringToByteArray(str);
-		}
-		ImageIO.read(new ByteArrayInputStream(encrypt));
-		ImageIO.write(image, "jpg", new File("./result"));
-		//System.out.println(str);
+//		for (int i = 0; i < data.length; i++) {
+//			str = byteArrayToBinaryString(data);
+//			//System.out.print(str+" ");
+//			System.out.print(data[i]+" ");
+//		}
+	
+		ImageIO.read(new ByteArrayInputStream(data));
+		ImageIO.write(image, "png", new File("./result"));
+	
 	}
 	
-	
-	
+
 	public static String byteArrayToBinaryString(byte[] b){
 	    StringBuilder sb=new StringBuilder();
 	    for(int i=0; i<b.length; ++i){
