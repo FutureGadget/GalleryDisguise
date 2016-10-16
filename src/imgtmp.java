@@ -29,7 +29,7 @@ public class imgtmp {
 			DataInputStream in = new DataInputStream(new FileInputStream(s));
 			while((len = in.read(data)) > 0) {
 				for (int i = 0; i < len; ++i) {
-					System.out.format("%02X", data[i]);
+					System.out.format("%02X ", data[i]);
 				}
 			}
 //			BufferedImage image = ImageIO.read(file);

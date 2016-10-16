@@ -1,4 +1,3 @@
-
 public class LFSR {
 	private static String initial_seed;
 	private static String current_seed;
@@ -27,16 +26,9 @@ public class LFSR {
 		}
 		return result;
 	}
+	
 	public static String string() {
 		//  return a string representation of the LFSR
 		return current_seed;
-	}
-	public static void main(String[] args) {
-		//  test all of the methods in LFSR
-		LFSR.init("01101000010", 8);
-		for (int i = 0; i < 10; i++) {
-		    int r = LFSR.generate(5);
-		    System.out.println(LFSR.string() + " " + r);
-		}
 	}
 }
