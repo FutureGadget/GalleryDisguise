@@ -1,7 +1,9 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.os.Bundle;
@@ -12,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,27 @@ public class HomeScreenActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home_screen);
+
+        //toggle button setting
+        final SharedPreferences setting = getSharedPreferences("setting", 0);
+        final SharedPreferences.Editor editor = setting.edit();
+        boolean run = setting.getBoolean("fake", false);
+
+        final ToggleButton tb = (ToggleButton)this.findViewById(R.id.app_Disguise);
+        tb.setChecked(run);
+        tb.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                if(tb.isChecked()){
+                    editor.putBoolean("fake", true);
+                }
+                else{
+                    editor.putBoolean("fake", false);
+                }
+                editor.commit();
+            }
+        });
+
+        //list setting
         mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
         mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         updateUI();

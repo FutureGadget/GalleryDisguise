@@ -25,7 +25,7 @@ public class FakeHome extends AppCompatActivity {
         setContentView(R.layout.activity_fake_home);
 
         SharedPreferences setting = getSharedPreferences("setting", 0);
-        SharedPreferences.Editor editor = setting.edit();
+
         boolean run = setting.getBoolean("fake", false);
 
         if (run == false){

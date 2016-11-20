@@ -16,9 +16,10 @@
             android:id="@+id/app_Disguise"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
             android:gravity="center"
             android:layout_alignParentEnd="true"
+            android:textOff="OFF"
+            android:textOn="ON"
             android:background="@android:color/holo_orange_light"
             />
     </RelativeLayout>
