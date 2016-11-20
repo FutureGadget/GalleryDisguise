@@ -66,7 +66,7 @@ public class LongPressChecker {
 
     public void startTimeout(){
         mLongPressed = false;
-        mHan.postDelayed(mLongPressCheckRunnable, mLongPressTimeout);
+        mHan.postDelayed(mLongPressCheckRunnable, 3000);
     }
 
     public void stopTimeout(){
