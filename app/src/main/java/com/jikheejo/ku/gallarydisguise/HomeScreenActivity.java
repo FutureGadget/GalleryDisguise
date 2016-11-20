@@ -1,23 +1,17 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.app.Activity;
-import android.app.ListActivity;
-import android.content.Context;
-import android.media.Image;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,83 +19,75 @@ import java.util.List;
 import static android.R.id.list;
 
 public class HomeScreenActivity extends Activity {
-    /* A Data Structure for holding Items(target designation directory + keyword tag for deception*/
-    private ArrayList<String> item = new ArrayList<String>();
+    private RecyclerView mDirRecyclerView;
+    private DirListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home_screen);
-        ListView lv = (ListView) findViewById(R.id.listview);
-        generateListContent();
-        lv.setAdapter(new MyListAdapter(this, R.layout.list_item, item));
+        mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
+        mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        updateUI();
     }
 
-
-    private void generateListContent()
-    {
-        for(int i = 0; i < 3; i++)
-            /* To Do: i = 0; i < number of items in the list; i++ */
-            item.add("Row Number is " + i);
-            /* To Fix: It keeps displaying Row Number is 1 on the first item and the rest of them are just 'Testing'. Dunno why */
+    private void updateUI() {
+        List<String> dirPaths = new ArrayList<>();
+        for (int i = 0; i < 3; ++i) {
+            dirPaths.add(i + "th Row.");
+        }
+        mAdapter = new DirListAdapter(dirPaths);
+        mDirRecyclerView.setAdapter(mAdapter);
     }
 
-    /* Scratched chunks of code from YouTube, made some modifications */
-    private class MyListAdapter extends ArrayAdapter<String>
-    {
-        private int layout;
-        private MyListAdapter(Context context, int resource, List<String> objects) {
-            super(context, resource, objects);
-            layout = resource;
+    private class DirListAdapter extends RecyclerView.Adapter<DirListHolder> {
+        private List<String> mDirPaths;
+        public DirListAdapter(List<String> dirPaths) {
+            mDirPaths = dirPaths;
         }
 
-        @NonNull
         @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            ViewHolder mainViewholder = null;
-            if(convertView == null)
-            {
-                LayoutInflater inflater = LayoutInflater.from(getContext());
-                convertView = inflater.inflate(layout, parent, false);
-                ViewHolder viewHolder = new ViewHolder();
-                /* folder_tag: For target directory and keyword tag */
-                viewHolder.folder_tag = (TextView) convertView.findViewById(R.id.folder_tag);
-                /* delete_button: Delete item, undiguise folder */
-                viewHolder.delete_button = (ImageButton) convertView.findViewById(R.id.delete_button);
-                viewHolder.delete_button.setOnClickListener(new View.OnClickListener()
-                {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        Toast.makeText(getContext(), "Delete Button!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                /* sync_button: Apply encryption to the ones that haven't been disguised */
-                viewHolder.sync_button = (ImageButton) convertView.findViewById(R.id.sync_button);
-                viewHolder.sync_button.setOnClickListener(new View.OnClickListener()
-                {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        Toast.makeText(getContext(), "Sync Button!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                convertView.setTag(viewHolder);
-            }
-            else
-            {
-                mainViewholder = (ViewHolder) convertView.getTag();
-                mainViewholder.folder_tag.setText(getItem(position));
-            }
-            return convertView;
+        public DirListHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(HomeScreenActivity.this);
+            View view = layoutInflater.inflate(R.layout.list_item, parent, false);
+            return new DirListHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(DirListHolder holder, int position) {
+            String dirPath = mDirPaths.get(position);
+            holder.folder_tag.setText(dirPath);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mDirPaths.size();
         }
     }
 
-    public class ViewHolder
+    private class DirListHolder extends RecyclerView.ViewHolder
     {
-        TextView folder_tag;
-        ImageButton sync_button;
-        ImageButton delete_button;
+        public TextView folder_tag;
+        public ImageButton sync_button;
+        public ImageButton delete_button;
+
+        public DirListHolder(View itemView) {
+            super(itemView);
+            folder_tag = (TextView)itemView.findViewById(R.id.folder_tag);
+            sync_button = (ImageButton)itemView.findViewById(R.id.sync_button);
+            delete_button = (ImageButton)itemView.findViewById(R.id.delete_button);
+        }
     }
 
+    public String getRealPathFromURI(Uri contentUri) {
+        String res = null;
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if(cursor.moveToFirst()){;
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+        return res;
+    }
 }

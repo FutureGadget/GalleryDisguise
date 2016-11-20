@@ -5,7 +5,7 @@
     android:id="@+id/home_screen"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    tools:context="com.example.mavenhyun.infosec_pro.HomeScreenActivity">
+    tools:context="com.jikheejo.ku.gallarydisguise.HomeScreenActivity">
 
     <RelativeLayout
         android:id="@+id/relativeLayout1"
@@ -23,26 +23,12 @@
             />
     </RelativeLayout>
 
-    <RelativeLayout
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/dirRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/add_button"
-            android:text="Add"
-            android:textSize="20sp"
-            android:textColor="@android:color/white"
-            android:textAlignment="center"
-            android:background="@color/colorPrimaryDark"
-            android:layout_alignParentBottom="true"
-            android:gravity="bottom|end"/>
-        <ListView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/listview">
-        </ListView>
-    </RelativeLayout>
+
+    </android.support.v7.widget.RecyclerView>
 
 
 </LinearLayout>
