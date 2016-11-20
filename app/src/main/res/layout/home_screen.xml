@@ -7,29 +7,39 @@
     android:layout_height="fill_parent"
     tools:context="com.jikheejo.ku.gallarydisguise.HomeScreenActivity">
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/relativeLayout1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_light" >
+        android:layout_height="match_parent"
+        android:orientation="vertical">
         <ToggleButton
             android:id="@+id/app_Disguise"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_alignParentEnd="true"
             android:textOff="OFF"
             android:textOn="ON"
+            android:layout_gravity="end"
+            android:layout_weight="0.01"
             android:background="@android:color/holo_orange_light"
             />
-    </RelativeLayout>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/dirRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.98">
+        </android.support.v7.widget.RecyclerView>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/addButton"
+            android:text="ADD"
+            android:layout_weight="0.01"/>
+    </LinearLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/dirRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
 
-    </android.support.v7.widget.RecyclerView>
+
+
 
 
 </LinearLayout>

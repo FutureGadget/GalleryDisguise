@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -57,9 +58,8 @@ public class HomeScreenActivity extends Activity {
 
     private void updateUI() {
         List<String> dirPaths = new ArrayList<>();
-        for (int i = 0; i < 3; ++i) {
-            dirPaths.add(i + "th Row.");
-        }
+        dirPaths.add(getFilesDir().toString());
+        dirPaths.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString());
         mAdapter = new DirListAdapter(dirPaths);
         mDirRecyclerView.setAdapter(mAdapter);
     }
