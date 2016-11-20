@@ -1,3 +1,4 @@
+
 public class LFSR {
 	private static String current_seed;
 	private static int tap_index;
