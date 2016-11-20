@@ -13,9 +13,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import com.jikheejo.ku.gallarydisguise.picpath.PhotoPath;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +53,15 @@ public class HomeScreenActivity extends Activity {
             }
         });
 
+        // add button behavior
+        Button addButton = (Button)this.findViewById(R.id.addButton);
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
         //list setting
         mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
         mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -57,9 +69,8 @@ public class HomeScreenActivity extends Activity {
     }
 
     private void updateUI() {
-        List<String> dirPaths = new ArrayList<>();
-        dirPaths.add(getFilesDir().toString());
-        dirPaths.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString());
+        // For test purposes only.
+        List<String> dirPaths = PhotoPath.getLeafPhotoDirs();
         mAdapter = new DirListAdapter(dirPaths);
         mDirRecyclerView.setAdapter(mAdapter);
     }
