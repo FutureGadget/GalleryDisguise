@@ -17,7 +17,9 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+import android.widget.Toast;
 
+import com.jikheejo.ku.gallarydisguise.picpath.BackButtonPress;
 import com.jikheejo.ku.gallarydisguise.picpath.PhotoPath;
 
 import java.util.ArrayList;
@@ -28,11 +30,15 @@ import static android.R.id.list;
 public class HomeScreenActivity extends Activity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
+    private BackButtonPress backButtonPress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home_screen);
+
+        //back button setting
+        backButtonPress = new BackButtonPress(this);
 
         //toggle button setting
         final SharedPreferences setting = getSharedPreferences("setting", 0);
@@ -66,6 +72,12 @@ public class HomeScreenActivity extends Activity {
         mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
         mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         updateUI();
+    }
+
+    //back button run
+    @Override
+    public void onBackPressed(){
+        backButtonPress.onBackPressed();
     }
 
     private void updateUI() {
