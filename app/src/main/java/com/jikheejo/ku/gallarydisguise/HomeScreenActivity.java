@@ -38,6 +38,11 @@ public class HomeScreenActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home_screen);
 
+        //list setting
+        mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
+        mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        updateUI();
+
         //back button setting
         backButtonPress = new BackButtonPress(this);
 
@@ -70,10 +75,7 @@ public class HomeScreenActivity extends Activity {
             }
         });
 
-        //list setting
-        mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
-        mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        updateUI();
+
     }
 
     //back button run
