@@ -2,7 +2,7 @@
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-// user password Encryption using MD5
+// User Password Encryption using by MD5
 public class Encrypt_Passwd {
 	// MD5 Encryption
 	protected String encryption(String str){
@@ -27,8 +27,10 @@ public class Encrypt_Passwd {
 	// MD5 value to Binary 
 	protected String key_generate(String str){
 		String key = "";
-		char[] tmp;
-		tmp = str.toCharArray();
+		char[] tmp = null;
+		str = str.replaceAll("[0-9]", ""); // Remove numeric values from string
+		tmp = str.toCharArray(); 
+		tmp = Cipher(tmp); // Caesar Cipher
 		for(int i=0; i<tmp.length; i++){
 			key += Integer.toBinaryString(tmp[i]);
 			if(key.length() > 31){
@@ -37,5 +39,19 @@ public class Encrypt_Passwd {
 			}
 		}
 		return key;
+	}
+	
+	protected char[] Cipher(char[] tmp){
+		for(int i=0; i<tmp.length; i++){
+			char letter = tmp[i];
+			letter = (char)(letter + 3);
+			if (letter > 'z') {
+				letter = (char) (letter - 26);
+		    } else if (letter < 'a') {
+				letter = (char) (letter + 26);
+			}
+		    tmp[i] = letter;
+		}
+		return tmp;
 	}
 }

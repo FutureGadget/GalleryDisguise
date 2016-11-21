@@ -9,7 +9,6 @@ public class main_Encrypt {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		
 		Encrypt_Passwd ep = new Encrypt_Passwd();
 		final String originalPath = "test"; // 사진폴더의 절대 경로받고
 		final String outpath = "test/abcd/"; // 저장될 폴더 경로 넘겨받고 
