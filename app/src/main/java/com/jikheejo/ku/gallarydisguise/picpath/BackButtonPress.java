@@ -28,7 +28,8 @@ public class BackButtonPress {
             return;
         }
         if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
-            activity.finish();
+           // activity.finish();
+            activity.finishAffinity();
             toast.cancel();
         }
     }
