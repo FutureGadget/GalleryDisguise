@@ -14,11 +14,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
 
-
-
 public class FakeHome extends AppCompatActivity {
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,9 +45,6 @@ public class FakeHome extends AppCompatActivity {
                 return false;
             }
         });
-
-
-
     }
 }
 

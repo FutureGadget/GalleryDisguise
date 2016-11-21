@@ -1,6 +1,7 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -64,7 +65,8 @@ public class HomeScreenActivity extends Activity {
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent i = new Intent(HomeScreenActivity.this, DirectoryListActivity.class);
+                startActivity(i);
             }
         });
 
@@ -124,17 +126,5 @@ public class HomeScreenActivity extends Activity {
             sync_button = (ImageButton)itemView.findViewById(R.id.sync_button);
             delete_button = (ImageButton)itemView.findViewById(R.id.delete_button);
         }
-    }
-
-    public String getRealPathFromURI(Uri contentUri) {
-        String res = null;
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if(cursor.moveToFirst()){;
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-        }
-        cursor.close();
-        return res;
     }
 }
