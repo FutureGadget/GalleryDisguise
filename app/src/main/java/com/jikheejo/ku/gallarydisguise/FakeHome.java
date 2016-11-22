@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
+import android.widget.ImageView;
 
 public class FakeHome extends AppCompatActivity {
     @Override
@@ -37,8 +38,8 @@ public class FakeHome extends AppCompatActivity {
             }
         });
 
-        Button b = (Button)findViewById(R.id.logobutton);
-        b.setOnTouchListener(new View.OnTouchListener() {
+        ImageView iv = (ImageView)findViewById(R.id.fakelogo);
+        iv.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mLongPressChecker.deliverMotionEvent(v, event);
