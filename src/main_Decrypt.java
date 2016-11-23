@@ -19,7 +19,7 @@ public class main_Decrypt {
 		
 		// 만약 복호화 패스워드의 md5값이 저장되어있는 값과 일치한다면, 복호화 수행
 		// if(upw_Encrypt == local md5 value)
-		String key = ep.key_generate(upw_Encrypt);
+		String key = ep.key_generate("gubt");
 		final File folder = new File(decrypt_path);
 		ArrayList<String> paths = get_FilePath.listFiles(folder);
 		for(String img_path : paths){
