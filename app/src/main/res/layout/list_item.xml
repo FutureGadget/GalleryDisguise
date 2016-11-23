@@ -1,40 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:padding="10dp">
-
-    <ImageButton
-        android:contentDescription="Sync"
+    android:layout_height="wrap_content">
+    <CheckBox
+        android:id="@+id/list_encrypted_dir_selected_checkbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@mipmap/ic_launcher"
-        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:id="@+id/sync_button"
-        android:visibility="visible"
-        style="@android:style/Widget.DeviceDefault.ImageButton" />
-
-    <ImageButton
-        android:contentDescription="Delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@mipmap/ic_launcher"
-        android:layout_toStartOf="@+id/sync_button"
-        android:id="@+id/delete_button"
-        android:visibility="visible"
-        style="@android:style/Widget.DeviceDefault.ImageButton" />
-
+        android:padding="4dp"
+        />
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/list_encrypted_dir_text_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Testing"
-        android:gravity="center|bottom"
-        android:textSize="30sp"
-        android:layout_alignParentStart="true"
-
-        android:id="@+id/folder_tag"
-        android:layout_alignParentTop="true" />
-
+        android:layout_toStartOf="@id/list_encrypted_dir_selected_checkbox"
+        android:padding="8dp"
+        tools:text="Dir Path" />
 </RelativeLayout>

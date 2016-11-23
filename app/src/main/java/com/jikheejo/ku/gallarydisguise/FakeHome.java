@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
 
+import com.jikheejo.ku.gallarydisguise.Encryption.GenerateKey;
+
 public class FakeHome extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,10 +23,24 @@ public class FakeHome extends AppCompatActivity {
         setContentView(R.layout.activity_fake_home);
 
         SharedPreferences setting = getSharedPreferences("setting", 0);
+        final SharedPreferences.Editor editor = setting.edit();
 
         boolean run = setting.getBoolean("fake", false);
 
-        if (run == false){
+        /*
+            initial check, generate key if this app is executed for the first time.
+            Use the key to generate the genuine key(through a hidden algorithm) and use it for
+            encryption/decryption.
+         */
+        boolean initialStart = setting.getBoolean("first", true);
+        if (initialStart) {
+            editor.putBoolean("first", false);
+            String key = GenerateKey.randKey();
+            editor.putString("key", key);
+            editor.commit();
+        }
+
+        if (!run){
             Intent inten = new Intent(FakeHome.this, HomeScreenActivity.class);
             startActivity(inten);
         }
