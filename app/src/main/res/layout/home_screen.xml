@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+        <!--
         <ToggleButton
             android:id="@+id/app_Disguise"
             android:layout_width="wrap_content"
@@ -23,6 +24,15 @@
             android:layout_weight="0.01"
             android:background="@android:color/holo_orange_light"
             />
+        -->
+        <Switch
+            android:text="   App Disguise"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/app_Disguise"
+            android:layout_weight="0.18"
+            android:textSize="20dp"/>
+
         <android.support.v7.widget.RecyclerView
             android:id="@+id/dirRecyclerView"
             android:layout_width="match_parent"
@@ -34,7 +44,13 @@
             android:layout_height="wrap_content"
             android:id="@+id/addButton"
             android:text="ADD"
-            android:layout_weight="0.01"/>
+            android:layout_weight="0.01"
+            android:layout_below="@+id/dirRecyclerView"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:background="@drawable/buttonshape" />
+
     </LinearLayout>
 
 
