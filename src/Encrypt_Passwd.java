@@ -2,7 +2,6 @@
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-// User Password Encryption using by MD5
 public class Encrypt_Passwd {
 	// SHA-256 Encryption
 	public static String encryption(String str){
