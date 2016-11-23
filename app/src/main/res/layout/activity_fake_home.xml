@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_fake_home"
     android:layout_width="match_parent"
@@ -10,13 +11,12 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.jikheejo.ku.gallarydisguise.FakeHome">
 
-    <Button
-        android:text="Button"
+    <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:srcCompat="@android:drawable/btn_dialog"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="112dp"
-        android:layout_marginTop="60dp"
-        android:id="@+id/logobutton" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="146dp"
+        android:id="@+id/fakelogo" />
 </RelativeLayout>
