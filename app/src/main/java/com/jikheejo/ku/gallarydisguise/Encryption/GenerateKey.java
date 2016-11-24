@@ -3,7 +3,6 @@ package com.jikheejo.ku.gallarydisguise.Encryption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-// User Password Encryption using by MD5
 public class GenerateKey {
     // Image Encryption Key
     public static String key_generate(String randkey){
