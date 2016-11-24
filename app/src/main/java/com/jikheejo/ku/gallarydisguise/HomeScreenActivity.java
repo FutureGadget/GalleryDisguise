@@ -139,6 +139,21 @@ public class HomeScreenActivity extends Activity {
         updateUI();
     }
 
+    public static void removeDir(String dirName) {
+        String mRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + dirName;
+
+        File file = new File(mRootPath);
+        File[] childFileList = file.listFiles();
+        for(File childFile : childFileList) {
+            if(childFile.isDirectory()) {
+                removeDir(childFile.getAbsolutePath());    //하위 디렉토리
+            } else {
+                childFile.delete();    //하위 파일
+            }
+        }
+        file.delete();    //root 삭제
+    }
+
     /**
      Selected paths contains a set of directories that the user wants to decrypt.
      For each paths, this method decrypts the files in it and moves it to the original directory.
@@ -177,6 +192,8 @@ public class HomeScreenActivity extends Activity {
                 JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
             } catch(Exception e) { e.printStackTrace(); }
         }
+
+        removeDir("/DCIM/");
     }
 
     /**

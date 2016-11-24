@@ -203,7 +203,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                 try {
                     in = new java.net.URL(tmpurl).openStream();
                     mBitmap = BitmapFactory.decodeStream(in);
-                    ImgSaver(tagname, i, mBitmap);
+                    ImgSaver(tagname, 1, mBitmap);
                     in.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -277,8 +277,7 @@ public class DirectoryListActivity extends AppCompatActivity {
 
     }
 
-
-    private void updateUI() {
+       private void updateUI() {
         JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
         List<String> dirPaths = PhotoPath.getLeafPhotoDirs();
         try {
