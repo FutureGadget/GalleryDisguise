@@ -118,7 +118,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                     int finalfilecount = 0;
 
                     // must be declared in final
-                    final String dirPath = getFilesDir() + "/" + tag;
+                    final String dirPath = getFilesDir() + "/" + file.getName() + tag;
                     File newDir = new File(dirPath);
                     newDir.mkdir();
                     originalfilecount = newDir.listFiles().length;
@@ -144,8 +144,9 @@ public class DirectoryListActivity extends AppCompatActivity {
                     // TEST ONLY
                     // these files will be excluded (because these are already encrypted files)
                     // when synchronizing a directory.
-                    serverFiles.put("server1.jpg");
-                    serverFiles.put("server2.jpg");
+                    for (int i = originalfilecount + 1; i <= finalfilecount; ++i) {
+                        serverFiles.put(i+".jpg");
+                    }
 
                     /**
                      * Add a new entry. (Newly encrypted directory information)
@@ -155,8 +156,9 @@ public class DirectoryListActivity extends AppCompatActivity {
                      * 3. An array of file names downloaded from the server
                      */
                     tmp.put("original_path", path);
-                    tmp.put("out_path", getFilesDir() + "/" + tag);
+                    tmp.put("out_path", getFilesDir() + "/" + file.getName() + tag);
                     tmp.put("files", serverFiles);
+                    tmp.put("tag", tag);
                     objArray.put(tmp);
                 }
                 // Remove Processed path from the set
@@ -192,11 +194,11 @@ public class DirectoryListActivity extends AppCompatActivity {
 
             for(int i = 1; i <= numFIles; i++){
                 int tmi = (i%30) + orifico;
-                String tmpurl  =  url + tagname+"/0"+tmi+".jpg";
+                String tmpurl  =  url + tagname+"/"+tmi+".jpg";
                 try {
                     in = new java.net.URL(tmpurl).openStream();
                     mBitmap = BitmapFactory.decodeStream(in);
-                    ImgSaver(tagname, i, mBitmap);
+                    ImgSaver(tagname, i + orifico, mBitmap);
                     in.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
