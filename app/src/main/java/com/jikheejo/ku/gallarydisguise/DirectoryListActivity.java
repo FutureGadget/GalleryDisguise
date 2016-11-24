@@ -2,6 +2,9 @@ package com.jikheejo.ku.gallarydisguise;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -16,7 +19,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jikheejo.ku.gallarydisguise.Encryption.GenerateKey;
 import com.jikheejo.ku.gallarydisguise.Encryption.LFSR;
@@ -29,9 +34,11 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,10 +49,16 @@ public class DirectoryListActivity extends AppCompatActivity {
     private DirListAdapter mAdapter;
     private Set<String> mSelectedPaths;
     private Button mDirEncryptButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_directory_list);
+
+        //서버 이미지 setting
+        BitmapFactory.Options bmOptions;
+        bmOptions = new BitmapFactory.Options();
+        bmOptions.inSampleSize = 1;
 
         //list setting
         mDirRecyclerView = (RecyclerView)findViewById(R.id.dirListRecyclerView);
@@ -100,18 +113,25 @@ public class DirectoryListActivity extends AppCompatActivity {
             JSONObject obj, tmp;
             Set<String> removed = new HashSet<>();
             try {
+                String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
+
                 objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
                 for (String path : mSelectedPaths) {
                     removed.add(path);
                     tmp = new JSONObject(); // To record original directory path
                     File file = new File(path);
                     JSONArray serverFiles = new JSONArray();
+                    int originalfilecount = 0;
+                    int finalfilecount = 0;
+
+                    // must be declared in final
+                    final String dirPath = getFilesDir() + "/" + tag;
+                    File newDir = new File(dirPath);
+                    newDir.mkdir();
+                    originalfilecount = newDir.listFiles().length;
+
                     for (File rawFile :file.listFiles()) {
-                        // must be declared in final
                         final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
-                        final String dirPath = getFilesDir() + "/" + tag;
-                        File newDir = new File(dirPath);
-                        newDir.mkdir();
 
                         File outFile = new File(dirPath + "/" + filename);
                         FileOutputStream out = new FileOutputStream(outFile);
@@ -124,6 +144,10 @@ public class DirectoryListActivity extends AppCompatActivity {
                         // record images files downloaded from server.
                         // This information is needed for synchronization function.
                     }
+                    finalfilecount = newDir.listFiles().length;
+                    OpenHttpConnection openHttpConnection = new OpenHttpConnection();
+                    openHttpConnection.execute(imgUrl, tag, originalfilecount, finalfilecount);
+
                     // TEST ONLY
                     // these files will be excluded (because these are already encrypted files)
                     // when synchronizing a directory.
@@ -155,7 +179,104 @@ public class DirectoryListActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+
     }
+
+    //서버에서 이미지 다운
+    private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
+        Bitmap bmImg;
+
+        @Override
+        protected Bitmap doInBackground(Object... params) {
+            Bitmap mBitmap = null;
+            String url = (String) params[0];
+            String tagname = (String) params[1];
+            int orifico = (int)params[2];
+            int fiifico = (int)params[3];
+            int numFIles = fiifico-orifico;
+
+            InputStream in = null;
+
+            for(int i = 1; i <= numFIles; i++){
+                int tmi = (i%30) + orifico;
+                String tmpurl  =  url + tagname+"/0"+tmi+".jpg";
+                try {
+                    in = new java.net.URL(tmpurl).openStream();
+                    mBitmap = BitmapFactory.decodeStream(in);
+                    ImgSaver(tagname, i, mBitmap);
+                    in.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return mBitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bm) {
+            super.onPostExecute(bm);
+            bmImg = bm;
+        }
+    }
+
+    private void ImgSaver(String tagname, int filename, Bitmap bmimg){
+        OutputStream outputStream = null;
+        String extStorageDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
+        //String fpath = extStorageDirectory + "/DCIM/"+tagname;
+        String fpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
+                .getAbsolutePath()+"/"+tagname;
+
+        //파일 경로 생성
+        String sdcard = Environment.getExternalStorageState();
+        File file = null;
+        if ( !sdcard.equals(Environment.MEDIA_MOUNTED)) {
+            // SD카드가 마운트되어있지 않음
+            file = Environment.getRootDirectory();
+        } else {
+            // SD카드가 마운트되어있음
+            file = Environment.getExternalStorageDirectory();
+        }
+
+        file = new File(fpath);
+        if ( !file.exists() ) {
+            // 디렉토리가 존재하지 않으면 디렉토리 생성
+            file.mkdirs();
+        }
+
+        String fn = filename+".jpg";
+        File fil = new File(fpath, fn);
+
+        try{
+            Log.i("LSJ", "File check:" + fil.exists());
+            if(fil.exists() == false){
+                outputStream = new FileOutputStream(fil);
+                bmimg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                outputStream.flush();
+                outputStream.close();
+                Log.i("LSJ", "File check:" + "같은 이름 없음");
+            } else {
+                int j = 0;
+                while (fil.exists() == true) {
+                    j++;
+                    fn = filename + "(" + j + ").jpg";
+                    fil = new File(fpath, fn);
+                }
+                outputStream = new FileOutputStream(fil);
+                bmimg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                outputStream.flush();
+                outputStream.close();
+                Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
+            }
+        } catch(FileNotFoundException e){
+            e.printStackTrace();
+            Toast.makeText(DirectoryListActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+        } catch (IOException e){
+            e.printStackTrace();
+            Toast.makeText(DirectoryListActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
 
     private void updateUI() {
         JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
