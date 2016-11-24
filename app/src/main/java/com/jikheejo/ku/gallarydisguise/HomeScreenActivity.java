@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.widget.Toast;
@@ -51,7 +52,7 @@ public class HomeScreenActivity extends Activity {
         final SharedPreferences.Editor editor = setting.edit();
         boolean run = setting.getBoolean("fake", false);
 
-        final ToggleButton tb = (ToggleButton)this.findViewById(R.id.app_Disguise);
+        final Switch tb = (Switch)this.findViewById(R.id.app_Disguise);
         tb.setChecked(run);
         tb.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
