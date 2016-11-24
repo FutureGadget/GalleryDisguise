@@ -1,8 +1,6 @@
 package com.jikheejo.ku.gallarydisguise;
 
-import android.content.Context;
 import android.content.DialogInterface;
-import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.jikheejo.ku.gallarydisguise.Encryption.GenerateKey;
@@ -105,13 +102,16 @@ public class DirectoryListActivity extends AppCompatActivity {
                     removed.add(path);
                     tmp = new JSONObject(); // To record original directory path
                     File file = new File(path);
+
+                    final String dirPath = getFilesDir() + "/" + tag;
+                    File newDir = new File(dirPath);
+                    newDir.mkdir();
+
                     JSONArray serverFiles = new JSONArray();
                     for (File rawFile :file.listFiles()) {
                         // must be declared in final
                         final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
-                        final String dirPath = getFilesDir() + "/" + tag;
-                        File newDir = new File(dirPath);
-                        newDir.mkdir();
+
 
                         File outFile = new File(dirPath + "/" + filename);
                         FileOutputStream out = new FileOutputStream(outFile);
