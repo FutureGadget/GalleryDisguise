@@ -11,11 +11,121 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.jikheejo.ku.gallarydisguise.FakeHome">
 
-    <ImageView
+    <TextView
+        android:text="Gkey Mobile 2.0"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/vaccine"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:id="@+id/fakelogo" />
+        android:id="@+id/faketext"
+        android:textSize="30dp" />
+
+    <TextView
+        android:text="virus definition is up-to-date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/faketext2"
+        android:textSize="20dp"
+        android:layout_below="@+id/faketext"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:id="@+id/quitbutton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Keep safe"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:background="@drawable/buttonshape" />
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:srcCompat="@drawable/vaccine"
+        android:id="@+id/fakelogo"
+        android:layout_below="@+id/faketext2"
+        android:layout_centerHorizontal="true" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="3"
+        android:orientation="horizontal"
+        android:id="@+id/gridLayout"
+        android:layout_below="@+id/fakelogo"
+        android:layout_alignParentStart="true">
+
+        <TextView
+            android:text="Real Time Monitoring"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical"
+            android:textSize="20dp"
+            android:id="@+id/fake1"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_gravity="center_horizontal|center_vertical"/>
+
+        <TextView
+            android:text="ON"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            android:id="@+id/on"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:layout_margin="10dp"
+            android:background="#3F51B5"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center"/>
+
+        <TextView
+            android:text="Malware Detection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical"
+            android:textSize="20dp"
+            android:id="@+id/fake2"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:layout_gravity="center_horizontal|center_vertical"/>
+
+        <TextView
+            android:text="OFF"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            android:id="@+id/off"
+            android:layout_row="1"
+            android:layout_column="1"
+            android:layout_margin="10dp"
+            android:background="#d8dcf0"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center"/>
+
+        <TextView
+            android:text="Battery Saver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical"
+            android:textSize="20dp"
+            android:id="@+id/fake3"
+            android:layout_row="2"
+            android:layout_column="0"
+            android:layout_gravity="center_horizontal|center_vertical"/>
+
+        <TextView
+            android:text="OFF"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            android:id="@+id/off2"
+            android:layout_row="2"
+            android:layout_column="1"
+            android:layout_margin="10dp"
+            android:background="#d8dcf0"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center"/>
+    </GridLayout>
+
+
 </RelativeLayout>

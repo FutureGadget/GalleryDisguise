@@ -2,9 +2,18 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <EditText
+    <!--<EditText
         android:id="@+id/tag_edit_text"
         android:hint="Please enter a tag"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content" /> -->
+
+    <ListView
+        android:id= "@+id/selecttag"
+        android:layout_width= "match_parent"
+        android:layout_height= "match_parent"
+        android:choiceMode= "singleChoice" >
+    </ListView >
+
+
 </LinearLayout>
