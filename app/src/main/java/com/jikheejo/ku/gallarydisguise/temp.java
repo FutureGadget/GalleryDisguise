@@ -48,38 +48,59 @@ public class temp extends AppCompatActivity {
         public void onClick(View arg0){
             OutputStream outputStream = null;
             String extStorageDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-            String fpath = extStorageDirectory + "/DCIM/Camera";
+            String fpath = extStorageDirectory + "/DCIM/dog";
 
-            File file1 = new File(fpath, "123.jpg");
-            File file2 = new File(fpath, "456.jpg");
-
-            try{
-                Log.i("LSJ", "File check:" + file1.exists());
-                if(file1.exists() == false){
-                    outputStream = new FileOutputStream(file1);
-                    bmImg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                    outputStream.flush();
-                    outputStream.close();
-
-                    Toast.makeText(temp.this, "저장완료", Toast.LENGTH_LONG).show();
-
-                    Log.i("LSJ", "File check:" + "같은 이름 없음");
-                } else if(file1.exists() == true){
-                    outputStream = new FileOutputStream(file2);
-                    bmImg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                    outputStream.flush();
-                    outputStream.close();
-
-                    Toast.makeText(temp.this, "파일이 중복되어 다른이름으로 변경", Toast.LENGTH_LONG).show();
-                    Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
-                }
-            } catch(FileNotFoundException e){
-                e.printStackTrace();
-                Toast.makeText(temp.this, e.toString(), Toast.LENGTH_LONG).show();
-            } catch (IOException e){
-                e.printStackTrace();
-                Toast.makeText(temp.this, e.toString(), Toast.LENGTH_LONG).show();
+            //파일 경로 생성
+            String sdcard = Environment.getExternalStorageState();
+            File file = null;
+            if ( !sdcard.equals(Environment.MEDIA_MOUNTED)) {
+                // SD카드가 마운트되어있지 않음
+                file = Environment.getRootDirectory();
+            } else {
+                // SD카드가 마운트되어있음
+                file = Environment.getExternalStorageDirectory();
             }
+
+            file = new File(fpath);
+            if ( !file.exists() ) {
+                // 디렉토리가 존재하지 않으면 디렉토리 생성
+                file.mkdirs();
+            }
+
+
+            for(int i = 0; i < 10; i++){
+                String fn = i+".jpg";
+                File fil = new File(fpath, fn);
+
+                try{
+                    Log.i("LSJ", "File check:" + fil.exists());
+                    //if(file1.exists() == false){
+                        outputStream = new FileOutputStream(fil);
+                        bmImg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                        outputStream.flush();
+                        outputStream.close();
+
+                        //Toast.makeText(temp.this, "저장완료", Toast.LENGTH_LONG).show();
+
+                        Log.i("LSJ", "File check:" + "같은 이름 없음");
+                    //} else if(file1.exists() == true){
+                       /* outputStream = new FileOutputStream(file2);
+                        bmImg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                        outputStream.flush();
+                        outputStream.close();
+*/
+                        //Toast.makeText(temp.this, "파일이 중복되어 다른이름으로 변경", Toast.LENGTH_LONG).show();
+                        Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
+                   // }
+                } catch(FileNotFoundException e){
+                    e.printStackTrace();
+                    Toast.makeText(temp.this, e.toString(), Toast.LENGTH_LONG).show();
+                } catch (IOException e){
+                    e.printStackTrace();
+                    Toast.makeText(temp.this, e.toString(), Toast.LENGTH_LONG).show();
+                }
+            }
+
         }
     };
 
