@@ -49,6 +49,8 @@ public class DirectoryListActivity extends AppCompatActivity {
     private DirListAdapter mAdapter;
     private Set<String> mSelectedPaths;
     private Button mDirEncryptButton;
+    private CharSequence[] mItems = {"cat", "trap"};
+    private String tag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,24 +73,15 @@ public class DirectoryListActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(DirectoryListActivity.this);
-                builder.setView(R.layout.encrypt_dialog)
-                        .setTitle("Encryption")
-                        .setItems(mSelectedPaths.toArray(new CharSequence[mSelectedPaths.size()]), new DialogInterface.OnClickListener(){
+                builder.setTitle("Encryption")
+                        .setItems(mItems, new DialogInterface.OnClickListener() {
+                            @Override
                             public void onClick(DialogInterface dialog, int which) {
-
+                                encryptAndSaveFiles(mItems[which].toString());
+                                updateUI();
                             }
-                        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Ok button behavior
-                        TextView tv = (TextView)((AlertDialog)dialog).findViewById(R.id.tag_edit_text);
-                        String tag;
-                        if (!((tag = tv.getText().toString()).equals(""))) {
-                            encryptAndSaveFiles(tag); // Encrypt selected directories
-                            updateUI();
-                        }
-                    }
-                }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        })
+                        .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Cancel button Behavior
