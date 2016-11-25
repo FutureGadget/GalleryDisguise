@@ -192,11 +192,11 @@ public class DirectoryListActivity extends AppCompatActivity {
 
             for(int i = 1; i <= numFIles; i++){
                 int tmi = (i%30) + orifico;
-                String tmpurl  =  url + tagname+"/0"+tmi+".jpg";
+                String tmpurl  =  url + tagname+"/"+tmi+".jpg";
                 try {
                     in = new java.net.URL(tmpurl).openStream();
                     mBitmap = BitmapFactory.decodeStream(in);
-                    ImgSaver(tagname, 1, mBitmap);
+                    ImgSaver(tagname, i+orifico, mBitmap);
                     in.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
