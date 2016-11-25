@@ -24,7 +24,7 @@ https://infosecurityterm.slack.com
 ###3. Testing
   - Rooting the emulator
   ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/7.png)
-  - Locate Photos under the following path : /storage/emulated/0/DCIM
+  - Put photos under the following path : /storage/emulated/0/DCIM
     - Any folder name under the DCIM is okay.
     - EX) /storage/emulated/0/DCIM/test1, /storage/emulated/0/DCIM/testtest ...
   - Result files(encrypted files) will be saved on /data/data/com.jikheejo.ku.gallarydisguise/files/{original_dirname + tag}.
