@@ -54,12 +54,36 @@ import java.util.List;
 import java.util.Set;
 
 import static android.R.id.list;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 
 public class HomeScreenActivity extends AppCompatActivity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
     private BackButtonPress backButtonPress;
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
+    private boolean homeButtonPressed;
+    public static final int RESULT_CLOSE_ALL = 1;
+
+    @Override
+    public void onResume() {
+        homeButtonPressed = false;
+        updateUI();
+        super.onResume();
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        homeButtonPressed = true;
+        super.onUserLeaveHint();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (homeButtonPressed) {
+            finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,11 +150,23 @@ public class HomeScreenActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(HomeScreenActivity.this, DirectoryListActivity.class);
-                startActivity(i);
+                i.addFlags(FLAG_ACTIVITY_NO_USER_ACTION); // Prevents activity lifecycle from calling onUserLeaveHint()
+                startActivityForResult(i, 0); // Prepares to close this activity on Home button pressed from the DirectoryListActivity
             }
         });
 
         // decrypt buttons behavior
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(resultCode)
+        {
+            case RESULT_CLOSE_ALL:
+                setResult(RESULT_CLOSE_ALL);
+                finish();
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -155,27 +191,6 @@ public class HomeScreenActivity extends AppCompatActivity {
             // other 'case' lines to check for other
             // permissions this app might request
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateUI();
-    }
-
-    public static void removeDir(String dirName) {
-        String mRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + dirName;
-
-        File file = new File(mRootPath);
-        File[] childFileList = file.listFiles();
-        for(File childFile : childFileList) {
-            if(childFile.isDirectory()) {
-                removeDir(childFile.getAbsolutePath());    //하위 디렉토리
-            } else {
-                childFile.delete();    //하위 파일
-            }
-        }
-        file.delete();    //root 삭제
     }
 
     /**
@@ -208,8 +223,6 @@ public class HomeScreenActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //removeDir("/DCIM/");
     }
 
     /**

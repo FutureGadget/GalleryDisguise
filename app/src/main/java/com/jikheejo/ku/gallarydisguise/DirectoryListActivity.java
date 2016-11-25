@@ -63,8 +63,30 @@ public class DirectoryListActivity extends AppCompatActivity {
     private CharSequence[] mItems = {"cat", "trap"};
     private String tag;
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
-    SharedPreferences setting;
-    SharedPreferences.Editor editor;
+    private SharedPreferences setting;
+    private SharedPreferences.Editor editor;
+    private boolean homeButtonPressed;
+
+    @Override
+    public void onResume() {
+        homeButtonPressed = false;
+        super.onResume();
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        homeButtonPressed = true;
+        super.onUserLeaveHint();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (homeButtonPressed) {
+            setResult(HomeScreenActivity.RESULT_CLOSE_ALL);
+            finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +193,7 @@ public class DirectoryListActivity extends AppCompatActivity {
 
         if (!mSelectedPaths.isEmpty()) {
             JSONArray objArray;
-            JSONObject obj, tmp;
+            JSONObject obj;
             Set<String> removed = new HashSet<>();
             setting = getSharedPreferences("setting", 0);
 
@@ -211,6 +233,10 @@ public class DirectoryListActivity extends AppCompatActivity {
                         // record images files downloaded from server.
                         // This information is needed for synchronization function.
 
+                        /**
+                         * Remove files from contents resolver.
+                         * This method will update the gallery automatically.
+                         */
                         String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
                         Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
                         ContentResolver contentResolver = getContentResolver();
