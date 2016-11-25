@@ -236,7 +236,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        removeDir("/DCIM/");
+        //removeDir("/DCIM/");
     }
 
     /**
