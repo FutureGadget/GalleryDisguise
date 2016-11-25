@@ -1,16 +1,20 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -115,7 +119,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 encryptAndSaveFiles(mItems[which].toString());
-                                updateUI();
+                                onBackPressed();
                             }
                         })
                         .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -162,6 +166,9 @@ public class DirectoryListActivity extends AppCompatActivity {
      * @param tag use this tag to download photos from the server.
      */
     private void encryptAndSaveFiles(String tag) {
+        String[] projection = { MediaStore.Images.Media._ID };
+        String selection = MediaStore.Images.Media.DATA + " = ?";
+
         if (!mSelectedPaths.isEmpty()) {
             JSONArray objArray;
             JSONObject obj, tmp;
@@ -174,7 +181,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                 objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
                 for (String path : mSelectedPaths) {
                     removed.add(path);
-                    tmp = new JSONObject(); // To record original directory path
                     File file = new File(path);
                     JSONArray serverFiles = new JSONArray();
 
@@ -204,6 +210,20 @@ public class DirectoryListActivity extends AppCompatActivity {
                         rawFile.delete();
                         // record images files downloaded from server.
                         // This information is needed for synchronization function.
+
+                        String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
+                        Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        ContentResolver contentResolver = getContentResolver();
+                        Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                        if (c.moveToFirst()) {
+                            // We found the ID. Deleting the item via the content provider will also remove the file
+                            long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                            Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                            contentResolver.delete(deleteUri, null, null);
+                        } else {
+                            // File not found in media store DB
+                        }
+                        c.close();
                     }
 
                     OpenHttpConnection openHttpConnection = new OpenHttpConnection();
@@ -229,11 +249,15 @@ public class DirectoryListActivity extends AppCompatActivity {
                      * 2. Encrypted dir path
                      * 3. An array of file names downloaded from the server
                      */
-                    tmp.put("original_path", path);
-                    tmp.put("out_path", getFilesDir() + "/" + file.getName() + tag);
-                    tmp.put("files", serverFiles);
-                    tmp.put("tag", tag);
-                    objArray.put(tmp);
+                    JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
+                    popped.put("original_path", path);
+                    popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
+                    JSONArray tmpArray = popped.getJSONArray("files");
+                    for (int i = 0; i < serverFiles.length(); ++i) {
+                        tmpArray.put(serverFiles.getString(i));
+                    }
+                    popped.put("files", tmpArray);
+                    popped.put("tag", tag);
                 }
                 // Remove Processed path from the set
                 for (String rm : removed) {
@@ -248,12 +272,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        finish();
     }
 
     //서버에서 이미지 다운
@@ -348,7 +366,6 @@ public class DirectoryListActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(DirectoryListActivity.this, e.toString(), Toast.LENGTH_LONG).show();
         }
-
     }
 
 

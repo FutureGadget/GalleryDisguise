@@ -1,6 +1,7 @@
 package com.jikheejo.ku.gallarydisguise.jsonutils;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -52,6 +53,27 @@ public class JsonUtils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Finds an Object whose original_path value is srcPath and removes it from the JSONArray and returns it.
+     * @param srcPath original_path
+     * @param objArray Source JSON Array
+     * @return JSONObject
+     * @throws JSONException JSONException
+     */
+    public static JSONObject jsonPopFromArray(String srcPath, JSONArray objArray) throws JSONException{
+        for (int i = 0; i < objArray.length(); ++i) {
+            JSONObject tmpJO = objArray.getJSONObject(i);
+            String dirName = tmpJO.getString("original_path");
+            if (dirName.equals(srcPath)) {
+                objArray.remove(i);
+                return tmpJO;
+            }
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("files", new JSONArray());
+        return new JSONObject();
     }
 
     /**
