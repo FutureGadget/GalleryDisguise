@@ -270,7 +270,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                 try {
                     in = new java.net.URL(tmpurl).openStream();
                     mBitmap = BitmapFactory.decodeStream(in);
-                    ImgSaver(tagname, i + orifico, mBitmap);
+                    ImgSaver(tagname, i + orifico + 1, mBitmap);
                     in.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
