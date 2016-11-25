@@ -3,10 +3,12 @@ package com.jikheejo.ku.gallarydisguise;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -332,6 +334,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                 outputStream.close();
                 Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
             }
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + fil)));
         } catch(FileNotFoundException e){
             e.printStackTrace();
             Toast.makeText(DirectoryListActivity.this, e.toString(), Toast.LENGTH_LONG).show();
@@ -346,15 +349,6 @@ public class DirectoryListActivity extends AppCompatActivity {
     private void updateUI() {
         JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
         List<String> dirPaths = PhotoPath.getLeafPhotoDirs();
-        try {
-            // Remove directories which have already been encrypted from the list.
-            for (int i = 0; i < dirArray.length(); ++i) {
-                JSONObject obj = dirArray.getJSONObject(i);
-                dirPaths.remove(obj.getString("original_path"));
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
         mAdapter = new DirListAdapter(dirPaths);
         mDirRecyclerView.setAdapter(mAdapter);
     }
