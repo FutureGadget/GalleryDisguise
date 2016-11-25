@@ -242,6 +242,12 @@ public class HomeScreenActivity extends AppCompatActivity {
         backButtonPress.onBackPressed();
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        finish();
+    }
+
     // update list
     private void updateUI() {
         List<String> dirPaths = new ArrayList<>();

@@ -250,6 +250,12 @@ public class DirectoryListActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        finish();
+    }
+
     //서버에서 이미지 다운
     private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
         Bitmap bmImg;
