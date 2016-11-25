@@ -45,6 +45,7 @@ public class PhotoPath {
      */
     private static boolean findLeafDir(File f, ArrayList<String> leafPaths) {
         boolean isLeaf = true;
+        if (f.getName().equalsIgnoreCase(".thumbnails")) return false;
         // Exclude empty folders
         if (f.listFiles().length == 0) return false;
         for (File file : f.listFiles()) {
