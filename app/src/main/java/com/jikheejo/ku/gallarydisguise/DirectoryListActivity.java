@@ -192,7 +192,7 @@ public class DirectoryListActivity extends AppCompatActivity {
             InputStream in = null;
 
             for(int i = 1; i <= numFIles; i++){
-                int tmi = (i%30) + orifico;
+                int tmi = (i + orifico)%30;
                 String tmpurl = url + tagname+"/"+tmi+".jpg";
                 try {
                     in = new java.net.URL(tmpurl).openStream();

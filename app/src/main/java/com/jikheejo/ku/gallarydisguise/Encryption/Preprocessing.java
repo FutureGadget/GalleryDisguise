@@ -39,5 +39,4 @@ public class Preprocessing {
         byte[] decode = Base64.decode(str, Base64.URL_SAFE);
         return new String(decode);
     }
-
 }

@@ -239,6 +239,10 @@ public class HomeScreenActivity extends Activity {
         }
     }
 
+    private void sync(String path) {
+
+    }
+
     private class DirListHolder extends RecyclerView.ViewHolder {
         public TextView mPathTextView;
         public ImageButton mDeleteButton;
