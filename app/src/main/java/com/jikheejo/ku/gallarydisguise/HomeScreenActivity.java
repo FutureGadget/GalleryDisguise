@@ -131,33 +131,6 @@ public class HomeScreenActivity extends AppCompatActivity {
         });
 
         // decrypt buttons behavior
-//        Button decryptButton = (Button)this.findViewById(R.id.decryptButton);
-//        decryptButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
-//                builder.setTitle("Decryption")
-//                        .setItems(mSelectedPaths.toArray(new CharSequence[mSelectedPaths.size()]), new DialogInterface.OnClickListener(){
-//                            public void onClick(DialogInterface dialog, int which) {
-//
-//                            }
-//                        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        // Ok button behavior
-//                        decrypt();
-//                        updateUI();
-//                    }
-//                }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        // Cancel button Behavior
-//                    }
-//                });
-//                AlertDialog dialog = builder.create();
-//                dialog.show();
-//            }
-//        });
     }
 
     @Override
@@ -236,7 +209,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        removeDir("/DCIM/");
+//        removeDir("/DCIM/");
     }
 
     /**
