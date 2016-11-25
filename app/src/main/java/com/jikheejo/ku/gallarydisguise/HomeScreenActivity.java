@@ -1,16 +1,21 @@
 package com.jikheejo.ku.gallarydisguise;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -50,11 +55,11 @@ import java.util.Set;
 
 import static android.R.id.list;
 
-public class HomeScreenActivity extends Activity {
+public class HomeScreenActivity extends AppCompatActivity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
     private BackButtonPress backButtonPress;
-    private Set<String> mSelectedPaths;
+    private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +67,36 @@ public class HomeScreenActivity extends Activity {
         setContentView(R.layout.home_screen);
 
         //list setting
-        mDirRecyclerView = (RecyclerView)findViewById(R.id.dirRecyclerView);
+        mDirRecyclerView = (RecyclerView) findViewById(R.id.dirRecyclerView);
         mDirRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // init selected paths set
-        mSelectedPaths = new HashSet<>();
+        // Request permission
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(HomeScreenActivity.this,
+                Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
 
-        updateUI();
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(HomeScreenActivity.this,
+                    Manifest.permission.READ_CONTACTS)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(HomeScreenActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_READ_WRITE_EXTERNAL);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
 
         //back button setting
         backButtonPress = new BackButtonPress(this);
@@ -79,14 +107,13 @@ public class HomeScreenActivity extends Activity {
         boolean run = setting.getBoolean("fake", false);
 
 
-        final Switch tb = (Switch)this.findViewById(R.id.app_Disguise);
+        final Switch tb = (Switch) this.findViewById(R.id.app_Disguise);
         tb.setChecked(run);
-        tb.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
-                if(tb.isChecked()){
+        tb.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (tb.isChecked()) {
                     editor.putBoolean("fake", true);
-                }
-                else{
+                } else {
                     editor.putBoolean("fake", false);
                 }
                 editor.commit();
@@ -94,7 +121,7 @@ public class HomeScreenActivity extends Activity {
         });
 
         // add button behavior
-        Button addButton = (Button)this.findViewById(R.id.addButton);
+        Button addButton = (Button) this.findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -104,33 +131,57 @@ public class HomeScreenActivity extends Activity {
         });
 
         // decrypt buttons behavior
-        Button decryptButton = (Button)this.findViewById(R.id.decryptButton);
-        decryptButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
-                builder.setTitle("Decryption")
-                        .setItems(mSelectedPaths.toArray(new CharSequence[mSelectedPaths.size()]), new DialogInterface.OnClickListener(){
-                            public void onClick(DialogInterface dialog, int which) {
+//        Button decryptButton = (Button)this.findViewById(R.id.decryptButton);
+//        decryptButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
+//                builder.setTitle("Decryption")
+//                        .setItems(mSelectedPaths.toArray(new CharSequence[mSelectedPaths.size()]), new DialogInterface.OnClickListener(){
+//                            public void onClick(DialogInterface dialog, int which) {
+//
+//                            }
+//                        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        // Ok button behavior
+//                        decrypt();
+//                        updateUI();
+//                    }
+//                }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        // Cancel button Behavior
+//                    }
+//                });
+//                AlertDialog dialog = builder.create();
+//                dialog.show();
+//            }
+//        });
+    }
 
-                            }
-                        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Ok button behavior
-                        decrypt();
-                        updateUI();
-                    }
-                }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Cancel button Behavior
-                    }
-                });
-                AlertDialog dialog = builder.create();
-                dialog.show();
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_READ_WRITE_EXTERNAL: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    updateUI();
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
             }
-        });
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     @Override
@@ -155,42 +206,34 @@ public class HomeScreenActivity extends Activity {
     }
 
     /**
-     Selected paths contains a set of directories that the user wants to decrypt.
-     For each paths, this method decrypts the files in it and moves it to the original directory.
+     * Selected paths contains a set of directories that the user wants to decrypt.
+     * For each paths, this method decrypts the files in it and moves it to the original directory.
      */
-    private void decrypt() {
-        if (!mSelectedPaths.isEmpty()) {
-            Set<String> removed = new HashSet<>();
-            try {
-                JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
-                for (String path : mSelectedPaths) {    // for each selected path(original directory)
-                    removed.add(path);
-                    String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
-                    File inDir = new File(outDirPath);  // open the directory
-                    for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
-                        final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
-                        File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
+    private void decrypt(final String path) {
+        try {
+            JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
+            String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
+            File inDir = new File(outDirPath);  // open the directory
+            for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
+                final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
+                File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
 
-                        OutputStream out = new FileOutputStream(outFile);   // open output stream
-                        String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", "")); // get key
-                        byte[] bytes = LFSR.transform(Preprocessing.byteRead(encryptedFile), key, 8);   // decrypt
-                        out.write(bytes);
-                        out.close();
-                        encryptedFile.delete();
-                    }
-                    inDir.delete();  // delete encrypted directory (already decrypted)
+                OutputStream out = new FileOutputStream(outFile);   // open output stream
+                String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", "")); // get key
+                byte[] bytes = LFSR.transform(Preprocessing.byteRead(encryptedFile), key, 8);   // decrypt
+                out.write(bytes);
+                out.close();
+                encryptedFile.delete();
+            }
+            inDir.delete();  // delete encrypted directory (already decrypted)
 
-                    // remove decrypted directory entry from the directory JSONArray
-                    JsonUtils.removeDirEntry(dirArray, path);
-                }
-                // Remove already decrypted paths from the selected set.
-                for (String rm : removed) {
-                    mSelectedPaths.remove(rm);
-                }
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put("List", dirArray);
-                JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
-            } catch(Exception e) { e.printStackTrace(); }
+            // remove decrypted directory entry from the directory JSONArray
+            JsonUtils.removeDirEntry(dirArray, path);
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("List", dirArray);
+            JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         removeDir("/DCIM/");
@@ -200,12 +243,13 @@ public class HomeScreenActivity extends Activity {
      * Get Output Directory path given an original path.
      * Search through the "trans.json" file.
      * EX) "original_path : /dcim/camera", "out_path : /data/data/gallery/tag"
-     @return a directory path which contains encrypted files.
+     *
+     * @return a directory path which contains encrypted files.
      */
     private String getOutDirPath(String path) {
         try {
             JSONObject jsonObj;
-            JSONArray jsonArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+            JSONArray jsonArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
             for (int i = 0; i < jsonArray.length(); ++i) {
                 jsonObj = jsonArray.getJSONObject(i);
                 String oriPath = jsonObj.getString("original_path");
@@ -221,7 +265,7 @@ public class HomeScreenActivity extends Activity {
 
     //back button run
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
         backButtonPress.onBackPressed();
     }
 
@@ -235,13 +279,16 @@ public class HomeScreenActivity extends Activity {
                 object = dirInfoArray.getJSONObject(i);
                 dirPaths.add(object.getString("original_path"));
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mAdapter = new DirListAdapter(dirPaths);
         mDirRecyclerView.setAdapter(mAdapter);
     }
 
     private class DirListAdapter extends RecyclerView.Adapter<DirListHolder> {
         private List<String> mDirPaths;
+
         public DirListAdapter(List<String> dirPaths) {
             mDirPaths = dirPaths;
         }
@@ -256,38 +303,49 @@ public class HomeScreenActivity extends Activity {
         @Override
         public void onBindViewHolder(final DirListHolder holder, int position) {
             final String dirPath = mDirPaths.get(position);
-            // Since recycler view reuses same objects, this code is needed to avoid wrongly checked objects.
-            holder.mPathTextView.setText(dirPath);
-            if (mSelectedPaths.contains(dirPath)) {
-                holder.mSelectCheckBox.setChecked(true);
-            } else {
-                holder.mSelectCheckBox.setChecked(false);
-            }
-            holder.mSelectCheckBox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (!holder.mSelectCheckBox.isChecked()) {
-                        mSelectedPaths.remove(dirPath);
-                    } else {
-                        mSelectedPaths.add(dirPath);
-                    }
-                }
-            });
+            holder.bind(dirPath);
         }
+
         @Override
         public int getItemCount() {
             return mDirPaths.size();
         }
     }
 
-    private class DirListHolder extends RecyclerView.ViewHolder
-    {
+    private void sync(String path) {
+
+    }
+
+    private class DirListHolder extends RecyclerView.ViewHolder {
         public TextView mPathTextView;
-        public CheckBox mSelectCheckBox;
+        public ImageButton mDeleteButton;
+        public ImageButton mSyncButton;
+        public String mPath;
+
         public DirListHolder(View itemView) {
             super(itemView);
-            mPathTextView = (TextView)itemView.findViewById(R.id.list_encrypted_dir_text_view);
-            mSelectCheckBox = (CheckBox)itemView.findViewById(R.id.list_encrypted_dir_selected_checkbox);
+            mPathTextView = (TextView) itemView.findViewById(R.id.list_encrypted_dir_text_view);
+            mDeleteButton = (ImageButton) itemView.findViewById(R.id.list_encrypted_dir_delete_button);
+            mSyncButton = (ImageButton) itemView.findViewById(R.id.list_encrypted_dir_sync_button);
+        }
+
+        public void bind(String dirPath) {
+            mPathTextView.setText(dirPath.substring(dirPath.lastIndexOf('/')+1, dirPath.length()));
+            mPath = dirPath;
+            final String path = dirPath;
+            mDeleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    decrypt(path);
+                    updateUI();
+                }
+            });
+            mSyncButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
         }
     }
 }
