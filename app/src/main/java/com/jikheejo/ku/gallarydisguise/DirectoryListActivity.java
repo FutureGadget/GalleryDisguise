@@ -397,8 +397,12 @@ public class DirectoryListActivity extends AppCompatActivity {
 
     private void updateUI() {
         JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
-        List<String> dirPaths = PhotoPath.getLeafPhotoDirs();
-        mAdapter = new DirListAdapter(dirPaths);
+        List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM));
+        List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+        for (String path : dirPathsPICS) {
+            dirPathsDCIM.add(path);
+        }
+        mAdapter = new DirListAdapter(dirPathsDCIM);
         mDirRecyclerView.setAdapter(mAdapter);
     }
 

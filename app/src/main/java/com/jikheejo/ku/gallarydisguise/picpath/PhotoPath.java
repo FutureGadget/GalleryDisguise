@@ -13,9 +13,15 @@ import java.util.List;
  */
 
 public class PhotoPath {
-    public static ArrayList<String> getLeafPhotoDirs() {
+    /**
+     * Example.
+     * getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM))
+     * getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES))
+     * @param dir Directory to search from.
+     * @return ArrayList of leaf directory paths.
+     */
+    public static ArrayList<String> getLeafPhotoDirs(File dir) {
         ArrayList<String> leafPaths = new ArrayList<>();
-        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
         boolean isLeaf = true;
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
@@ -31,6 +37,12 @@ public class PhotoPath {
         return leafPaths;
     }
 
+    /**
+     * Recursively finds leaf dirs from the root directory. (Root directory is given as a parameter)
+     * @param f root directory file
+     * @param leafPaths data structure to store leaf directories' absolute paths.
+     * @return ArrayList of saved leaf directory paths.
+     */
     private static boolean findLeafDir(File f, ArrayList<String> leafPaths) {
         boolean isLeaf = true;
         // Exclude empty folders
