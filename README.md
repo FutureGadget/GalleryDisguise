@@ -4,14 +4,14 @@ Find me if you can.
 https://infosecurityterm.slack.com
 
 ## Testing
-1. Importing Project
+###1. Importing Project
 
-![](https://github.com/FutureGadget/GalleryDisguise/blob/master/1.PNG)
-![](https://github.com/FutureGadget/GalleryDisguise/blob/master/2.png)
-![](https://github.com/FutureGadget/GalleryDisguise/blob/master/3.PNG)
-![](https://github.com/FutureGadget/GalleryDisguise/blob/master/4.png)
+  ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/1.PNG)
+  ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/2.png)
+  ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/3.PNG)
+  ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/4.png)
 
-2. Running
+###2. Running
 
   - Before testing
     - To test this app without a real android device, download NOX app player [android emulator](https://www.bignox.com/).
@@ -21,7 +21,7 @@ https://infosecurityterm.slack.com
 ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/6.PNG)
 <br>If the device is not showing, try rebooting the emulator.
 
-3. Testing
+###3. Testing
   - Rooting the emulator
   ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/7.png)
   - Locate Photos under the following path : /storage/emulated/0/DCIM
@@ -30,7 +30,7 @@ https://infosecurityterm.slack.com
   - Result files(encrypted files) will be saved on /data/data/com.jikheejo.ku.gallarydisguise/files/{original_dirname + tag}.
     - EX) encrypt screenshot folder with a tag "cat" => results will be stored on /data/data/com.jikheejo.ku.gallarydisguise/files/screenshotcat
     
-4. Bug reporting
+###4. Bug reporting
   - [Submit Issues](https://github.com/FutureGadget/GalleryDisguise/issues)
 
 Thank you!
