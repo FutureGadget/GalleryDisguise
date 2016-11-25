@@ -3,6 +3,7 @@ package com.jikheejo.ku.gallarydisguise;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -56,6 +57,8 @@ public class DirectoryListActivity extends AppCompatActivity {
     private CharSequence[] mItems = {"cat", "trap"};
     private String tag;
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
+    SharedPreferences setting;
+    SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,6 +164,8 @@ public class DirectoryListActivity extends AppCompatActivity {
             JSONArray objArray;
             JSONObject obj, tmp;
             Set<String> removed = new HashSet<>();
+            setting = getSharedPreferences("setting", 0);
+
             try {
                 String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
 
@@ -170,16 +175,21 @@ public class DirectoryListActivity extends AppCompatActivity {
                     tmp = new JSONObject(); // To record original directory path
                     File file = new File(path);
                     JSONArray serverFiles = new JSONArray();
-                    int originalfilecount = 0;
-                    int finalfilecount = 0;
+
+                    //String tagfoldernum = tag + "foldernum";
+                    String tagusingimgnum = tag + "usingimgnum";
+                   // setting.getInt(tagfoldernum, 0);
+
+                    int originalfilecount = setting.getInt(tagusingimgnum, 0);
+                    int updateimgcount = 0;
 
                     // must be declared in final
                     final String dirPath = getFilesDir() + "/" + file.getName() + tag;
                     File newDir = new File(dirPath);
                     newDir.mkdir();
-                    originalfilecount = newDir.listFiles().length;
 
                     for (File rawFile :file.listFiles()) {
+                        updateimgcount++;
                         final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
 
                         File outFile = new File(dirPath + "/" + filename);
@@ -193,16 +203,22 @@ public class DirectoryListActivity extends AppCompatActivity {
                         // record images files downloaded from server.
                         // This information is needed for synchronization function.
                     }
-                    finalfilecount = newDir.listFiles().length;
+
                     OpenHttpConnection openHttpConnection = new OpenHttpConnection();
-                    openHttpConnection.execute(imgUrl, tag, originalfilecount, finalfilecount);
+                    openHttpConnection.execute(imgUrl, tag, originalfilecount, updateimgcount);
 
                     // TEST ONLY
                     // these files will be excluded (because these are already encrypted files)
                     // when synchronizing a directory.
-                    for (int i = originalfilecount + 1; i <= finalfilecount; ++i) {
-                        serverFiles.put(i+".jpg");
+                    for (int i = 1; i <= updateimgcount; ++i) {
+                        int tmpi = i + originalfilecount;
+                        serverFiles.put(tmpi+".jpg");
                     }
+
+                    updateimgcount = updateimgcount+originalfilecount;
+                    editor = setting.edit();
+                    editor.putInt(tagusingimgnum, updateimgcount);
+                    editor.commit();
 
                     /**
                      * Add a new entry. (Newly encrypted directory information)
@@ -242,13 +258,12 @@ public class DirectoryListActivity extends AppCompatActivity {
             String url = (String) params[0];
             String tagname = (String) params[1];
             int orifico = (int)params[2];
-            int fiifico = (int)params[3];
-            int numFIles = fiifico-orifico;
+            int numFIles = (int)params[3];
 
             InputStream in = null;
 
-            for(int i = 1; i <= numFIles; i++){
-                int tmi = (i + orifico)%30;
+            for(int i = 0; i < numFIles; i++){
+                int tmi = (i + orifico)%30 + 1;
                 String tmpurl = url + tagname+"/"+tmi+".jpg";
                 try {
                     in = new java.net.URL(tmpurl).openStream();
