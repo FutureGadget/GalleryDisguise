@@ -12,17 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <!--<ToggleButton
-            android:id="@+id/app_Disguise"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textOff="OFF"
-            android:textOn="ON"
-            android:layout_gravity="end"
-            android:layout_weight="0.01"
-            android:background="@android:color/holo_orange_light"
-            />-->
 
         <Switch
             android:text="App Disguise"
@@ -54,24 +43,17 @@
                 android:textSize="20sp"
                 android:background="@drawable/buttonshape"
                 android:layout_margin="10dp"/>
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/decryptButton"
-                android:text="decrypt"
-                android:layout_weight="0.5"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:background="@drawable/buttonshape"
-                android:layout_margin="10dp"
-                />
+            <!--<Button-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:id="@+id/decryptButton"-->
+                <!--android:text="delete"-->
+                <!--android:layout_weight="0.5"-->
+                <!--android:textColor="#FFFFFF"-->
+                <!--android:textSize="20sp"-->
+                <!--android:background="@drawable/buttonshape"-->
+                <!--android:layout_margin="10dp"-->
+                <!--/>-->
         </LinearLayout>
-
     </LinearLayout>
-
-
-
-
-
-
 </LinearLayout>

@@ -174,7 +174,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
     }
 
     //서버에서 이미지 다운
@@ -194,7 +193,7 @@ public class DirectoryListActivity extends AppCompatActivity {
 
             for(int i = 1; i <= numFIles; i++){
                 int tmi = (i%30) + orifico;
-                String tmpurl  =  url + tagname+"/"+tmi+".jpg";
+                String tmpurl = url + tagname+"/"+tmi+".jpg";
                 try {
                     in = new java.net.URL(tmpurl).openStream();
                     mBitmap = BitmapFactory.decodeStream(in);
@@ -224,7 +223,7 @@ public class DirectoryListActivity extends AppCompatActivity {
         //파일 경로 생성
         String sdcard = Environment.getExternalStorageState();
         File file = null;
-        if ( !sdcard.equals(Environment.MEDIA_MOUNTED)) {
+        if (!sdcard.equals(Environment.MEDIA_MOUNTED)) {
             // SD카드가 마운트되어있지 않음
             file = Environment.getRootDirectory();
         } else {
