@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -50,7 +51,7 @@ import java.util.Set;
 
 import static android.R.id.list;
 
-public class HomeScreenActivity extends Activity {
+public class HomeScreenActivity extends AppCompatActivity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
     private BackButtonPress backButtonPress;
