@@ -1,6 +1,8 @@
 
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 
 public class Encrypt_Passwd {
 	// SHA-256 Encryption
@@ -27,41 +29,43 @@ public class Encrypt_Passwd {
 	public static String key_generate(String randkey){
 		String key = "";
 		char[] tmp = null;
-		tmp = randkey.toCharArray(); 
-		tmp = Cipher(tmp); // Caesar Cipher
+		tmp = Cipher(randkey.toCharArray());
 		for(int i=0; i<tmp.length; i++){
-			key += Integer.toBinaryString(tmp[i]);
-			if(key.length() > 31){
-				key = key.substring(0, 31);
-				break;	
-			}
+			key += Long.toBinaryString(tmp[i]);
 		}
 		return key;
 	}
 	
-	// making random String
 	public static String randKey(){
-		String key="";
-		char tmp;
-		for(int i=0; i<4; i++){
-			tmp = (char)((int)(Math.random()*26)+97);
-			key += tmp;
-		}
-		return key;
+		String id = UUID.randomUUID().toString();
+		return id.replaceAll("-", "");
 	}
 	
-	// Caesar Cipher
 	public static char[] Cipher(char[] tmp){
-		for(int i=0; i<tmp.length; i++){
-			char letter = tmp[i];
-			letter = (char)(letter + 3);
-			if (letter > 'z') {
-				letter = (char) (letter - 26);
-		    } else if (letter < 'a') {
-				letter = (char) (letter + 26);
-			}
-		    tmp[i] = letter;
+		int j = tmp.length-1;
+		int k = 0;
+		char[] result = new char[8];
+		for(int i=0; i<8; i+=2){
+			result[i] = tmp[k];
+			result[i+1] = tmp[j];
+			k++;
+			j--;
 		}
-		return tmp;
+		return result;
 	}
+	
+//	// Caesar Cipher
+//	public static char[] Cipher(char[] tmp){
+//		for(int i=0; i<tmp.length; i++){
+//			char letter = tmp[i];
+//			letter = (char)(letter + 3);
+//			if (letter > 'z') {
+//				letter = (char) (letter - 26);
+//		    } else if (letter < 'a') {
+//				letter = (char) (letter + 26);
+//			}
+//		    tmp[i] = letter;
+//		}
+//		return tmp;
+//	}
 }

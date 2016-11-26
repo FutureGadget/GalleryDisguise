@@ -1,5 +1,6 @@
 
 
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class main_Encrypt {
 		System.out.println("user password SHA-256 value :" + result);
 		String randtmp = Encrypt_Passwd.randKey();
 		System.out.println("사용자에게 주어진 random key :" + randtmp);
-		key = Encrypt_Passwd.key_generate(randtmp);
+		key = Encrypt_Passwd.key_generate(randtmp); // 임시로 강제부여
 		
 		final File folder = new File(originalPath);
 		ArrayList<String> paths = get_FilePath.listFiles(folder);
@@ -30,7 +31,7 @@ public class main_Encrypt {
 		for (String img_path : paths) {
 			try {
 				byte[] byte_file = Processing.byteRead(img_path); // byte 형식으로 읽어옴
-				byte_file = PhotoMagic.transform(byte_file, key, 8); // perfect key : 00111000111100010000110101001
+				byte_file = LFSR2.transform(byte_file, key, 8); // perfect key : 00111000111100010000110101001
 				Processing.Encrypt_save(byte_file, outpath, img_path); 
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
