@@ -6,16 +6,18 @@
     android:layout_height="wrap_content">
     <ImageButton
         android:id="@+id/list_encrypted_dir_delete_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_alignParentEnd="true"
-        android:src="@drawable/ic_delete_black_24dp"/>
+        android:src="@drawable/decrypt"
+        android:scaleType="fitCenter" />
     <ImageButton
         android:id="@+id/list_encrypted_dir_sync_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_toLeftOf="@id/list_encrypted_dir_delete_button"
-        android:src="@drawable/ic_autorenew_black_24dp"/>
+        android:src="@drawable/sync"
+        android:scaleType="fitCenter"/>
     <TextView
         android:id="@+id/list_encrypted_dir_text_view"
         android:layout_width="match_parent"
