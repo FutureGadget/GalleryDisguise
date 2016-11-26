@@ -20,12 +20,14 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -146,8 +148,35 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
         });
 
-        // Get password from user (Just for this time)
+        // Get password from user (Just for one time only)
+        boolean hasPassword = setting.getBoolean("hasPassword", false);
+        if (!hasPassword) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
+            final EditText input = new EditText(HomeScreenActivity.this);
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            builder.setView(input);
 
+            builder.setTitle("Password Setting")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String text = input.getText().toString();
+                            if (!text.equals("")) {
+                                editor.putString("password", GenerateKey.encryption(text)); // sha256 hashing
+                                editor.putBoolean("hasPassword", true);
+                                editor.commit();
+                            }
+                        }
+                    })
+                    .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
 
         // add button behavior
         Button addButton = (Button) this.findViewById(R.id.addButton);
@@ -215,7 +244,6 @@ public class HomeScreenActivity extends AppCompatActivity {
 
             // array of file names downloaded from the image server.(fake files created in the encryption process.)
             JSONArray fakeFilesArray = jsonObject.getJSONArray(tag);
-            Log.d("TAGTAG", fakeFilesArray.toString()+"");
 
             /**
              * Remove files downloaded from the server using ContentResolver.
@@ -311,6 +339,16 @@ public class HomeScreenActivity extends AppCompatActivity {
         backButtonPress.onBackPressed();
     }
 
+    // Verify user before executing decryption.
+    private boolean verify(String inputPassword) {
+        SharedPreferences setting = getSharedPreferences("setting", 0);
+        String sha256pass = setting.getString("password", "");
+        if (sha256pass.equals(GenerateKey.encryption(inputPassword))) {
+            return true;
+        }
+        return false;
+    }
+
     // update list
     private void updateUI() {
         List<String> dirPaths = new ArrayList<>();
@@ -374,8 +412,33 @@ public class HomeScreenActivity extends AppCompatActivity {
             mDeleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    decrypt(path);
-                    updateUI();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
+                    builder.setTitle("Password protected");
+                    // Set up the input
+                    final EditText input = new EditText(HomeScreenActivity.this);
+                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    builder.setView(input);
+
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String inputPassword = input.getText().toString();
+                            if(verify(inputPassword)) {
+                                decrypt(path);
+                                updateUI();
+                            } else {
+                                Toast.makeText(HomeScreenActivity.this, "Wrong Password!", Toast.LENGTH_SHORT).show();
+                                dialog.cancel();
+                            }
+                        }
+                    });
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    builder.show();
                 }
             });
             mSyncButton.setOnClickListener(new View.OnClickListener() {
