@@ -1,5 +1,7 @@
 package com.jikheejo.ku.gallarydisguise.jsonutils;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,9 +43,9 @@ public class JsonUtils {
      * Get JSON Array object of a directory array.
      * @return JSONArray of a directory array.
      */
-    public static JSONArray getDirJSONArray (String path) {
+    public static JSONArray getDirJSONArray (String jsonFilePath) {
         try {
-            JSONObject obj = readJSONObject(path);
+            JSONObject obj = readJSONObject(jsonFilePath);
             if (obj == null) {
                 return new JSONArray();
             } else {
@@ -71,9 +73,24 @@ public class JsonUtils {
                 return tmpJO;
             }
         }
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("files", new JSONArray());
         return new JSONObject();
+    }
+
+    /**
+     *
+     * @param jsonFilePath json file path
+     * @param tag encryption tag
+     * @return JSONArray of the tag's fake file
+     * @throws JSONException
+     */
+    public static JSONArray getTagFakeFileArray(String jsonFilePath, String tag) throws JSONException{
+        JSONObject obj = readJSONObject(jsonFilePath);
+        if (obj == null) obj = new JSONObject();
+        if (obj.has(tag)) {
+            return obj.getJSONArray(tag);
+        } else {
+            return new JSONArray();
+        }
     }
 
     /**

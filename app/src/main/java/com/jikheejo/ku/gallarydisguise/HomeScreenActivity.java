@@ -2,6 +2,8 @@ package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -198,10 +200,61 @@ public class HomeScreenActivity extends AppCompatActivity {
      * For each paths, this method decrypts the files in it and moves it to the original directory.
      */
     private void decrypt(final String path) {
+        SharedPreferences setting = getSharedPreferences("setting", 0);
+        String[] projection = { MediaStore.Images.Media._ID };
+        String selection = MediaStore.Images.Media.DATA + " = ?";
         try {
-            JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
+            JSONObject jsonObject = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
+            JSONArray dirArray = jsonObject.getJSONArray("List");
+            JSONObject dirEntryObject = JsonUtils.jsonPopFromArray(path, dirArray);
+            String tag = dirEntryObject.getString("tag");
+            String tagDirPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/" + tag;
             String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
-            File inDir = new File(outDirPath);  // open the directory
+            File inDir = new File(outDirPath);          // open the directory
+
+            // array of file names downloaded from the image server.(fake files created in the encryption process.)
+            JSONArray fakeFilesArray = jsonObject.getJSONArray(tag);
+            Log.d("TAGTAG", fakeFilesArray.toString()+"");
+
+            /**
+             * Remove files downloaded from the server using ContentResolver.
+             * This method will update the gallery automatically.
+             */
+            for (int i = 0; i < inDir.listFiles().length; ++i) {
+                String fakeFileAbsPath = tagDirPath + "/" + fakeFilesArray.getString(i);
+                Log.d("TAGDIRPATH", fakeFileAbsPath);
+                String[] selectionArgs = new String[] { fakeFileAbsPath };
+                Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                ContentResolver contentResolver = getContentResolver();
+                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                if (c.moveToFirst()) {
+                    // We found the ID. Deleting the item via the content provider will also remove the file
+                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                    contentResolver.delete(deleteUri, null, null);
+                } else {
+                    // File not found in media store DB
+                }
+                c.close();
+            }
+
+            for (int i = 0; i < inDir.listFiles().length; ++i) {
+                fakeFilesArray.remove(0); // it works like a queue.
+            }
+
+            if (fakeFilesArray.length() == 0) {
+                // reset tag file number counter
+                // should be reset only when the  becomes zero.
+                SharedPreferences.Editor editor = setting.edit();
+                editor.remove(tag+"usingimgnum");
+                editor.commit();
+
+                File fakeFilesDir = new File(tagDirPath);
+                if (fakeFilesDir.listFiles().length == 0) {
+                    fakeFilesDir.delete();
+                }
+            }
+
             for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
                 final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
                 File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
@@ -212,13 +265,16 @@ public class HomeScreenActivity extends AppCompatActivity {
                 out.write(bytes);
                 out.close();
                 encryptedFile.delete();
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + outFile.getAbsolutePath())));
             }
             inDir.delete();  // delete encrypted directory (already decrypted)
 
-            // remove decrypted directory entry from the directory JSONArray
-            JsonUtils.removeDirEntry(dirArray, path);
+            // JsonUtils.removeDirEntry(dirArray, path);
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("List", dirArray);
+            jsonObj.put("List", dirArray);  // Since the decrypted directory entry is already removed when calling "jsonPopFromArray()", no need to update it here.
+            if (fakeFilesArray.length() != 0) {
+                jsonObj.put(tag, fakeFilesArray);
+            }
             JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
         } catch (Exception e) {
             e.printStackTrace();

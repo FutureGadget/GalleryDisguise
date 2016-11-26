@@ -199,12 +199,11 @@ public class DirectoryListActivity extends AppCompatActivity {
 
             try {
                 String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
-
                 objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+                JSONArray serverFiles = new JSONArray();
                 for (String path : mSelectedPaths) {
                     removed.add(path);
                     File file = new File(path);
-                    JSONArray serverFiles = new JSONArray();
 
                     //String tagfoldernum = tag + "foldernum";
                     String tagusingimgnum = tag + "usingimgnum";
@@ -260,7 +259,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                     // when synchronizing a directory.
                     for (int i = 1; i <= updateimgcount; ++i) {
                         int tmpi = i + originalfilecount;
-                        serverFiles.put(tmpi+".jpg");
+                        serverFiles.put(tmpi + ".jpg");
                     }
 
                     updateimgcount = updateimgcount+originalfilecount;
@@ -273,17 +272,13 @@ public class DirectoryListActivity extends AppCompatActivity {
                      * Record the following:
                      * 1. Original dir path
                      * 2. Encrypted dir path
-                     * 3. An array of file names downloaded from the server
+                     * 3. Tag name
                      */
                     JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
                     popped.put("original_path", path);
                     popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
-                    JSONArray tmpArray = popped.getJSONArray("files");
-                    for (int i = 0; i < serverFiles.length(); ++i) {
-                        tmpArray.put(serverFiles.getString(i));
-                    }
-                    popped.put("files", tmpArray);
                     popped.put("tag", tag);
+                    objArray.put(popped);
                 }
                 // Remove Processed path from the set
                 for (String rm : removed) {
@@ -291,6 +286,15 @@ public class DirectoryListActivity extends AppCompatActivity {
                 }
                 obj = new JSONObject();
                 obj.put("List", objArray);
+
+                // add downloaded fake files to the existing array or create a new list for the tag.
+                JSONArray tagFakeFiles = JsonUtils.getTagFakeFileArray(getFilesDir()+"/trans.json", tag);
+                for (int i = 0; i < serverFiles.length(); ++i) {
+                    tagFakeFiles.put(serverFiles.getString(i));
+                }
+                obj.put(tag, tagFakeFiles);
+
+                // write out to json file.
                 JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -336,10 +340,8 @@ public class DirectoryListActivity extends AppCompatActivity {
         }
     }
 
-    private void ImgSaver(String tagname, int filename, Bitmap bmimg){
+    private void ImgSaver(String tagname, int filename, Bitmap bmimg) {
         OutputStream outputStream = null;
-        String extStorageDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-        //String fpath = extStorageDirectory + "/DCIM/"+tagname;
         String fpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
                 .getAbsolutePath()+"/"+tagname;
 
@@ -396,7 +398,6 @@ public class DirectoryListActivity extends AppCompatActivity {
 
 
     private void updateUI() {
-        JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
         List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM));
         List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
         for (String path : dirPathsPICS) {
