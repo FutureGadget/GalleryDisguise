@@ -399,17 +399,28 @@ public class DirectoryListActivity extends AppCompatActivity {
     private void updateUI() {
         Set<String> exceptionDirNames = new HashSet<>();
         try {
-            JSONArray tagArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
-            for (int i = 0; i < tagArray.length(); ++i) {
-                exceptionDirNames.add(tagArray.getJSONObject(i).getString("tag"));
+            JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+            for (int i = 0; i < dirArray.length(); ++i) {
+                exceptionDirNames.add(dirArray.getJSONObject(i).getString("tag"));
+                exceptionDirNames.add(dirArray.getJSONObject(i).getString("original_path"));
             }
         } catch (Exception e) { e.printStackTrace(); }
+
         List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), exceptionDirNames);
         List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), null);
-        for (String path : dirPathsPICS) {
-            dirPathsDCIM.add(path);
+        List<String> finalPath = new ArrayList<>();
+        for (String s : dirPathsDCIM) {
+            if (!exceptionDirNames.contains(s)) {
+                finalPath.add(s);
+            }
         }
-        mAdapter = new DirListAdapter(dirPathsDCIM);
+        for (String s : dirPathsPICS) {
+            if (!exceptionDirNames.contains(s)) {
+                finalPath.add(s);
+            }
+        }
+
+        mAdapter = new DirListAdapter(finalPath);
         mDirRecyclerView.setAdapter(mAdapter);
     }
 
