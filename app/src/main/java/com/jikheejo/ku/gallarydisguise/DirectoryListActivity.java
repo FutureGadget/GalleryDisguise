@@ -1,6 +1,7 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -61,11 +62,13 @@ public class DirectoryListActivity extends AppCompatActivity {
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
     SharedPreferences setting;
     SharedPreferences.Editor editor;
+    public static boolean realfin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_directory_list);
+        realfin = false;
 
         // Request permission
         // Here, thisActivity is the current activity
@@ -115,7 +118,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 encryptAndSaveFiles(mItems[which].toString());
-                                updateUI();
                             }
                         })
                         .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -250,11 +252,6 @@ public class DirectoryListActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        finish();
-    }
 
     //서버에서 이미지 다운
     private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
