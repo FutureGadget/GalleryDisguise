@@ -396,10 +396,16 @@ public class DirectoryListActivity extends AppCompatActivity {
         }
     }
 
-
     private void updateUI() {
-        List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM));
-        List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+        Set<String> exceptionDirNames = new HashSet<>();
+        try {
+            JSONArray tagArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+            for (int i = 0; i < tagArray.length(); ++i) {
+                exceptionDirNames.add(tagArray.getJSONObject(i).getString("tag"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), exceptionDirNames);
+        List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), null);
         for (String path : dirPathsPICS) {
             dirPathsDCIM.add(path);
         }

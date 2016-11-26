@@ -146,6 +146,9 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
         });
 
+        // Get password from user (Just for this time)
+
+
         // add button behavior
         Button addButton = (Button) this.findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
@@ -156,8 +159,6 @@ public class HomeScreenActivity extends AppCompatActivity {
                 startActivityForResult(i, 0); // Prepares to close this activity on Home button pressed from the DirectoryListActivity
             }
         });
-
-        // decrypt buttons behavior
     }
 
     @Override

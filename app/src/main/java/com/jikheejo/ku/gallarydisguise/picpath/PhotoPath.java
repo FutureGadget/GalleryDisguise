@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by dw on 2016-11-21.
@@ -20,13 +21,16 @@ public class PhotoPath {
      * @param dir Directory to search from.
      * @return ArrayList of leaf directory paths.
      */
-    public static ArrayList<String> getLeafPhotoDirs(File dir) {
+    public static ArrayList<String> getLeafPhotoDirs(File dir, Set<String> exceptionDirNames) {
         ArrayList<String> leafPaths = new ArrayList<>();
         boolean isLeaf = true;
         for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
-                if (findLeafDir(f, leafPaths)) {
-                    leafPaths.add(f.getAbsolutePath());
+                // except tag folders under the DCIM directory.
+                if (exceptionDirNames == null || !exceptionDirNames.contains(f.getName())) {
+                    if (findLeafDir(f, leafPaths)) {
+                        leafPaths.add(f.getAbsolutePath());
+                    }
                 }
                 isLeaf = false;
             }
