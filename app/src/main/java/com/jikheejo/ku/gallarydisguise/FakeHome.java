@@ -23,6 +23,15 @@ public class FakeHome extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fake_home);
 
+        // Fake quit button
+        Button quit = (Button)findViewById(R.id.quitbutton);
+        quit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
         SharedPreferences setting = getSharedPreferences("setting", 0);
         final SharedPreferences.Editor editor = setting.edit();
 

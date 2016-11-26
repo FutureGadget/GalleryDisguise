@@ -77,10 +77,10 @@ public class JsonUtils {
     }
 
     /**
-     *
+     * Returns JSONArray of the tag's fake files
      * @param jsonFilePath json file path
      * @param tag encryption tag
-     * @return JSONArray of the tag's fake file
+     * @return JSONArray of the tag's fake files
      * @throws JSONException
      */
     public static JSONArray getTagFakeFileArray(String jsonFilePath, String tag) throws JSONException{

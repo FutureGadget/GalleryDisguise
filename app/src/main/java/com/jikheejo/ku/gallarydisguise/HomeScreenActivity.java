@@ -222,7 +222,6 @@ public class HomeScreenActivity extends AppCompatActivity {
              */
             for (int i = 0; i < inDir.listFiles().length; ++i) {
                 String fakeFileAbsPath = tagDirPath + "/" + fakeFilesArray.getString(i);
-                Log.d("TAGDIRPATH", fakeFileAbsPath);
                 String[] selectionArgs = new String[] { fakeFileAbsPath };
                 Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
                 ContentResolver contentResolver = getContentResolver();
