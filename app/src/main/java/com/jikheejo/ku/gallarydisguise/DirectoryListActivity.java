@@ -1,11 +1,9 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,13 +13,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
@@ -31,8 +29,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,15 +42,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class DirectoryListActivity extends AppCompatActivity {
@@ -62,7 +59,8 @@ public class DirectoryListActivity extends AppCompatActivity {
     private DirListAdapter mAdapter;
     private Set<String> mSelectedPaths;
     private Button mDirEncryptButton;
-    private CharSequence[] mItems = {"cat", "trap"};
+    private CharSequence[] mItems = {"cat", "fishing", "planking"};
+    private Map<String, Integer> numServerFiles = new HashMap<>();
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
     private SharedPreferences setting;
     private SharedPreferences.Editor editor;
@@ -93,6 +91,11 @@ public class DirectoryListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_directory_list);
+
+        // init server file number
+        numServerFiles.put("cat", 30);
+        numServerFiles.put("fishing", 10);
+        numServerFiles.put("planking", 10);
 
         // Request permission
         // Here, thisActivity is the current activity
@@ -141,8 +144,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                         .setItems(mItems, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-//                                encryptAndSaveFiles(mItems[which].toString());
-//                                onBackPressed();
                                 int totalNumFiles = 0;
                                 for (String path : mSelectedPaths) {
                                     totalNumFiles += new File(path).listFiles().length;
@@ -153,7 +154,6 @@ public class DirectoryListActivity extends AppCompatActivity {
                         .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Cancel button Behavior
                     }
                 });
                 AlertDialog dialog = builder.create();
@@ -353,7 +353,7 @@ public class DirectoryListActivity extends AppCompatActivity {
         Bitmap mBitmap = null;
         InputStream in = null;
         for(int i = 0; i < numFIles; i++){
-            int tmi = (i + orifico)%30 + 1;
+            int tmi = (i + orifico)%(numServerFiles.get(tagname)) + 1;
             String tmpurl = url + tagname+"/"+tmi+".jpg";
             try {
                 in = new java.net.URL(tmpurl).openStream();
