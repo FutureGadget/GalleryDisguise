@@ -1,17 +1,20 @@
 package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
-import android.app.ProgressDialog;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -60,15 +63,35 @@ public class DirectoryListActivity extends AppCompatActivity {
     private CharSequence[] mItems = {"cat", "trap"};
     private String tag;
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
-    SharedPreferences setting;
-    SharedPreferences.Editor editor;
-    public static boolean realfin;
+    private SharedPreferences setting;
+    private SharedPreferences.Editor editor;
+    private boolean homeButtonPressed;
+
+    @Override
+    public void onResume() {
+        homeButtonPressed = false;
+        super.onResume();
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        homeButtonPressed = true;
+        super.onUserLeaveHint();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (homeButtonPressed) {
+            setResult(HomeScreenActivity.RESULT_CLOSE_ALL);
+            finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_directory_list);
-        realfin = false;
 
         // Request permission
         // Here, thisActivity is the current activity
@@ -118,6 +141,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 encryptAndSaveFiles(mItems[which].toString());
+                                onBackPressed();
                             }
                         })
                         .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -164,21 +188,22 @@ public class DirectoryListActivity extends AppCompatActivity {
      * @param tag use this tag to download photos from the server.
      */
     private void encryptAndSaveFiles(String tag) {
+        String[] projection = { MediaStore.Images.Media._ID };
+        String selection = MediaStore.Images.Media.DATA + " = ?";
+
         if (!mSelectedPaths.isEmpty()) {
             JSONArray objArray;
-            JSONObject obj, tmp;
+            JSONObject obj;
             Set<String> removed = new HashSet<>();
             setting = getSharedPreferences("setting", 0);
 
             try {
                 String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
-
                 objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+                JSONArray serverFiles = new JSONArray();
                 for (String path : mSelectedPaths) {
                     removed.add(path);
-                    tmp = new JSONObject(); // To record original directory path
                     File file = new File(path);
-                    JSONArray serverFiles = new JSONArray();
 
                     //String tagfoldernum = tag + "foldernum";
                     String tagusingimgnum = tag + "usingimgnum";
@@ -206,6 +231,24 @@ public class DirectoryListActivity extends AppCompatActivity {
                         rawFile.delete();
                         // record images files downloaded from server.
                         // This information is needed for synchronization function.
+
+                        /**
+                         * Remove files from contents resolver.
+                         * This method will update the gallery automatically.
+                         */
+                        String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
+                        Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        ContentResolver contentResolver = getContentResolver();
+                        Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                        if (c.moveToFirst()) {
+                            // We found the ID. Deleting the item via the content provider will also remove the file
+                            long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                            Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                            contentResolver.delete(deleteUri, null, null);
+                        } else {
+                            // File not found in media store DB
+                        }
+                        c.close();
                     }
 
                     OpenHttpConnection openHttpConnection = new OpenHttpConnection();
@@ -216,7 +259,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                     // when synchronizing a directory.
                     for (int i = 1; i <= updateimgcount; ++i) {
                         int tmpi = i + originalfilecount;
-                        serverFiles.put(tmpi+".jpg");
+                        serverFiles.put(tmpi + ".jpg");
                     }
 
                     updateimgcount = updateimgcount+originalfilecount;
@@ -229,13 +272,13 @@ public class DirectoryListActivity extends AppCompatActivity {
                      * Record the following:
                      * 1. Original dir path
                      * 2. Encrypted dir path
-                     * 3. An array of file names downloaded from the server
+                     * 3. Tag name
                      */
-                    tmp.put("original_path", path);
-                    tmp.put("out_path", getFilesDir() + "/" + file.getName() + tag);
-                    tmp.put("files", serverFiles);
-                    tmp.put("tag", tag);
-                    objArray.put(tmp);
+                    JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
+                    popped.put("original_path", path);
+                    popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
+                    popped.put("tag", tag);
+                    objArray.put(popped);
                 }
                 // Remove Processed path from the set
                 for (String rm : removed) {
@@ -243,6 +286,15 @@ public class DirectoryListActivity extends AppCompatActivity {
                 }
                 obj = new JSONObject();
                 obj.put("List", objArray);
+
+                // add downloaded fake files to the existing array or create a new list for the tag.
+                JSONArray tagFakeFiles = JsonUtils.getTagFakeFileArray(getFilesDir()+"/trans.json", tag);
+                for (int i = 0; i < serverFiles.length(); ++i) {
+                    tagFakeFiles.put(serverFiles.getString(i));
+                }
+                obj.put(tag, tagFakeFiles);
+
+                // write out to json file.
                 JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -251,7 +303,6 @@ public class DirectoryListActivity extends AppCompatActivity {
             }
         }
     }
-
 
     //서버에서 이미지 다운
     private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
@@ -289,10 +340,8 @@ public class DirectoryListActivity extends AppCompatActivity {
         }
     }
 
-    private void ImgSaver(String tagname, int filename, Bitmap bmimg){
+    private void ImgSaver(String tagname, int filename, Bitmap bmimg) {
         OutputStream outputStream = null;
-        String extStorageDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-        //String fpath = extStorageDirectory + "/DCIM/"+tagname;
         String fpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
                 .getAbsolutePath()+"/"+tagname;
 
@@ -345,14 +394,33 @@ public class DirectoryListActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(DirectoryListActivity.this, e.toString(), Toast.LENGTH_LONG).show();
         }
-
     }
 
-
     private void updateUI() {
-        JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
-        List<String> dirPaths = PhotoPath.getLeafPhotoDirs();
-        mAdapter = new DirListAdapter(dirPaths);
+        Set<String> exceptionDirNames = new HashSet<>();
+        try {
+            JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+            for (int i = 0; i < dirArray.length(); ++i) {
+                exceptionDirNames.add(dirArray.getJSONObject(i).getString("tag"));
+                exceptionDirNames.add(dirArray.getJSONObject(i).getString("original_path"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        List<String> dirPathsDCIM = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), exceptionDirNames);
+        List<String> dirPathsPICS = PhotoPath.getLeafPhotoDirs(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), null);
+        List<String> finalPath = new ArrayList<>();
+        for (String s : dirPathsDCIM) {
+            if (!exceptionDirNames.contains(s)) {
+                finalPath.add(s);
+            }
+        }
+        for (String s : dirPathsPICS) {
+            if (!exceptionDirNames.contains(s)) {
+                finalPath.add(s);
+            }
+        }
+
+        mAdapter = new DirListAdapter(finalPath);
         mDirRecyclerView.setAdapter(mAdapter);
     }
 

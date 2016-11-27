@@ -2,13 +2,18 @@ package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.os.Bundle;
@@ -18,12 +23,15 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -54,12 +62,36 @@ import java.util.List;
 import java.util.Set;
 
 import static android.R.id.list;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 
 public class HomeScreenActivity extends AppCompatActivity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
     private BackButtonPress backButtonPress;
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
+    private boolean homeButtonPressed;
+    public static final int RESULT_CLOSE_ALL = 1;
+
+    @Override
+    public void onResume() {
+        homeButtonPressed = false;
+        updateUI();
+        super.onResume();
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        homeButtonPressed = true;
+        super.onUserLeaveHint();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (homeButtonPressed) {
+            finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,17 +152,57 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
         });
 
+        // Get password from user (Just for one time only)
+        boolean hasPassword = setting.getBoolean("hasPassword", false);
+        if (!hasPassword) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
+            final EditText input = new EditText(HomeScreenActivity.this);
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            builder.setView(input);
+
+            builder.setTitle("Password Setting")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String text = input.getText().toString();
+                            if (!text.equals("")) {
+                                editor.putString("password", GenerateKey.encryption(text)); // sha256 hashing
+                                editor.putBoolean("hasPassword", true);
+                                editor.commit();
+                            }
+                        }
+                    })
+                    .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+
         // add button behavior
         Button addButton = (Button) this.findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(HomeScreenActivity.this, DirectoryListActivity.class);
-                startActivity(i);
+                i.addFlags(FLAG_ACTIVITY_NO_USER_ACTION); // Prevents activity lifecycle from calling onUserLeaveHint()
+                startActivityForResult(i, 0); // Prepares to close this activity on Home button pressed from the DirectoryListActivity
             }
         });
+    }
 
-        // decrypt buttons behavior
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(resultCode)
+        {
+            case RESULT_CLOSE_ALL:
+                setResult(RESULT_CLOSE_ALL);
+                finish();
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -157,36 +229,64 @@ public class HomeScreenActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateUI();
-    }
-
-    public static void removeDir(String dirName) {
-        String mRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + dirName;
-
-        File file = new File(mRootPath);
-        File[] childFileList = file.listFiles();
-        for(File childFile : childFileList) {
-            if(childFile.isDirectory()) {
-                removeDir(childFile.getAbsolutePath());    //하위 디렉토리
-            } else {
-                childFile.delete();    //하위 파일
-            }
-        }
-        file.delete();    //root 삭제
-    }
-
     /**
      * Selected paths contains a set of directories that the user wants to decrypt.
      * For each paths, this method decrypts the files in it and moves it to the original directory.
      */
     private void decrypt(final String path) {
+        SharedPreferences setting = getSharedPreferences("setting", 0);
+        String[] projection = { MediaStore.Images.Media._ID };
+        String selection = MediaStore.Images.Media.DATA + " = ?";
         try {
-            JSONArray dirArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
+            JSONObject jsonObject = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
+            JSONArray dirArray = jsonObject.getJSONArray("List");
+            JSONObject dirEntryObject = JsonUtils.jsonPopFromArray(path, dirArray);
+            String tag = dirEntryObject.getString("tag");
+            String tagDirPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/" + tag;
             String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
-            File inDir = new File(outDirPath);  // open the directory
+            File inDir = new File(outDirPath);          // open the directory
+
+            // array of file names downloaded from the image server.(fake files created in the encryption process.)
+            JSONArray fakeFilesArray = jsonObject.getJSONArray(tag);
+
+            /**
+             * Remove files downloaded from the server using ContentResolver.
+             * This method will update the gallery automatically.
+             */
+            for (int i = 0; i < inDir.listFiles().length; ++i) {
+                String fakeFileAbsPath = tagDirPath + "/" + fakeFilesArray.getString(i);
+                String[] selectionArgs = new String[] { fakeFileAbsPath };
+                Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                ContentResolver contentResolver = getContentResolver();
+                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                if (c.moveToFirst()) {
+                    // We found the ID. Deleting the item via the content provider will also remove the file
+                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                    contentResolver.delete(deleteUri, null, null);
+                } else {
+                    // File not found in media store DB
+                }
+                c.close();
+            }
+
+            for (int i = 0; i < inDir.listFiles().length; ++i) {
+                fakeFilesArray.remove(0); // it works like a queue.
+            }
+
+            if (fakeFilesArray.length() == 0) {
+                // reset tag file number counter
+                // should be reset only when the  becomes zero.
+                SharedPreferences.Editor editor = setting.edit();
+                editor.remove(tag+"usingimgnum");
+                editor.commit();
+
+                File fakeFilesDir = new File(tagDirPath);
+                if (fakeFilesDir.listFiles().length == 0) {
+                    fakeFilesDir.delete();
+                }
+            }
+
             for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
                 final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
                 File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
@@ -197,19 +297,20 @@ public class HomeScreenActivity extends AppCompatActivity {
                 out.write(bytes);
                 out.close();
                 encryptedFile.delete();
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + outFile.getAbsolutePath())));
             }
             inDir.delete();  // delete encrypted directory (already decrypted)
 
-            // remove decrypted directory entry from the directory JSONArray
-            JsonUtils.removeDirEntry(dirArray, path);
+            // JsonUtils.removeDirEntry(dirArray, path);
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("List", dirArray);
+            jsonObj.put("List", dirArray);  // Since the decrypted directory entry is already removed when calling "jsonPopFromArray()", no need to update it here.
+            if (fakeFilesArray.length() != 0) {
+                jsonObj.put(tag, fakeFilesArray);
+            }
             JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //removeDir("/DCIM/");
     }
 
     /**
@@ -242,6 +343,15 @@ public class HomeScreenActivity extends AppCompatActivity {
         backButtonPress.onBackPressed();
     }
 
+    // Verify user before executing decryption.
+    private boolean verify(String inputPassword) {
+        SharedPreferences setting = getSharedPreferences("setting", 0);
+        String sha256pass = setting.getString("password", "");
+        if (sha256pass.equals(GenerateKey.encryption(inputPassword))) {
+            return true;
+        }
+        return false;
+    }
 
     // update list
     private void updateUI() {
@@ -286,11 +396,214 @@ public class HomeScreenActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Synchronize unencrypted files in the disguised folder.
+     * @param tag use this tag to download photos from the server.
+     */
+    private void sync(String path, String tag) {
+        String[] projection = { MediaStore.Images.Media._ID };
+        String selection = MediaStore.Images.Media.DATA + " = ?";
+        JSONArray objArray;
+        JSONObject obj;
+        SharedPreferences setting = getSharedPreferences("setting", 0);
+
+        try {
+            String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
+            objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+            JSONArray serverFiles = new JSONArray();
+
+            File file = new File(path);
+
+            String tagusingimgnum = tag + "usingimgnum";
+
+            int originalfilecount = setting.getInt(tagusingimgnum, 0);
+            int updateimgcount = 0;
+
+            // must be declared in final
+            final String dirPath = getFilesDir() + "/" + file.getName() + tag;
+            // File newDir = new File(dirPath);
+            // newDir.mkdir();
+
+            for (File rawFile :file.listFiles()) {
+                updateimgcount++;
+                final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
+
+                File outFile = new File(dirPath + "/" + filename);
+                FileOutputStream out = new FileOutputStream(outFile);
+
+                String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", ""));
+                byte[] bytes = LFSR.transform(Preprocessing.byteRead(rawFile), key, 8); // key, tab, revised.
+                out.write(bytes);
+                out.close();
+                rawFile.delete();
+                // record images files downloaded from server.
+                // This information is needed for synchronization function.
+
+                /**
+                 * Remove files from contents resolver.
+                 * This method will update the gallery automatically.
+                 */
+                String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
+                Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                ContentResolver contentResolver = getContentResolver();
+                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                if (c.moveToFirst()) {
+                    // We found the ID. Deleting the item via the content provider will also remove the file
+                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                    contentResolver.delete(deleteUri, null, null);
+                } else {
+                    // File not found in media store DB
+                }
+                c.close();
+            }
+
+            HomeScreenActivity.OpenHttpConnection openHttpConnection = new HomeScreenActivity.OpenHttpConnection();
+            openHttpConnection.execute(imgUrl, tag, originalfilecount, updateimgcount);
+
+            // TEST ONLY
+            // these files will be excluded (because these are already encrypted files)
+            // when synchronizing a directory.
+            for (int i = 1; i <= updateimgcount; ++i) {
+                int tmpi = i + originalfilecount;
+                serverFiles.put(tmpi + ".jpg");
+            }
+
+            updateimgcount = updateimgcount+originalfilecount;
+            SharedPreferences.Editor editor = setting.edit();
+            editor.putInt(tagusingimgnum, updateimgcount);
+            editor.commit();
+
+            /**
+             * Add a new entry. (Newly encrypted directory information)
+             * Record the following:
+             * 1. Original dir path
+             * 2. Encrypted dir path
+             * 3. Tag name
+             */
+            JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
+            popped.put("original_path", path);
+            popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
+            popped.put("tag", tag);
+            objArray.put(popped);
+
+            obj = new JSONObject();
+            obj.put("List", objArray);
+
+            // add downloaded fake files to the existing array or create a new list for the tag.
+            JSONArray tagFakeFiles = JsonUtils.getTagFakeFileArray(getFilesDir()+"/trans.json", tag);
+            for (int i = 0; i < serverFiles.length(); ++i) {
+                tagFakeFiles.put(serverFiles.getString(i));
+            }
+            obj.put(tag, tagFakeFiles);
+
+            // write out to json file.
+            JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //서버에서 이미지 다운
+    private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
+        Bitmap bmImg;
+
+        @Override
+        protected Bitmap doInBackground(Object... params) {
+            Bitmap mBitmap = null;
+            String url = (String) params[0];
+            String tagname = (String) params[1];
+            int orifico = (int)params[2];
+            int numFIles = (int)params[3];
+
+            InputStream in = null;
+
+            for(int i = 0; i < numFIles; i++){
+                int tmi = (i + orifico)%30 + 1;
+                String tmpurl = url + tagname+"/"+tmi+".jpg";
+                try {
+                    in = new java.net.URL(tmpurl).openStream();
+                    mBitmap = BitmapFactory.decodeStream(in);
+                    ImgSaver(tagname, i + orifico + 1, mBitmap);
+                    in.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return mBitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bm) {
+            super.onPostExecute(bm);
+            bmImg = bm;
+        }
+    }
+
+    private void ImgSaver(String tagname, int filename, Bitmap bmimg) {
+        OutputStream outputStream = null;
+        String fpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
+                .getAbsolutePath()+"/"+tagname;
+
+        //파일 경로 생성
+        String sdcard = Environment.getExternalStorageState();
+        File file = null;
+        if (!sdcard.equals(Environment.MEDIA_MOUNTED)) {
+            // SD카드가 마운트되어있지 않음
+            file = Environment.getRootDirectory();
+        } else {
+            // SD카드가 마운트되어있음
+            file = Environment.getExternalStorageDirectory();
+        }
+
+        file = new File(fpath);
+        if ( !file.exists() ) {
+            // 디렉토리가 존재하지 않으면 디렉토리 생성
+            file.mkdirs();
+        }
+
+        String fn = filename+".jpg";
+        File fil = new File(fpath, fn);
+
+        try{
+            Log.i("LSJ", "File check:" + fil.exists());
+            if(fil.exists() == false){
+                outputStream = new FileOutputStream(fil);
+                bmimg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                outputStream.flush();
+                outputStream.close();
+                Log.i("LSJ", "File check:" + "같은 이름 없음");
+            } else {
+                int j = 0;
+                while (fil.exists() == true) {
+                    j++;
+                    fn = filename + "(" + j + ").jpg";
+                    fil = new File(fpath, fn);
+                }
+                outputStream = new FileOutputStream(fil);
+                bmimg.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                outputStream.flush();
+                outputStream.close();
+                Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
+            }
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + fil)));
+        } catch(FileNotFoundException e){
+            e.printStackTrace();
+            Toast.makeText(HomeScreenActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+        } catch (IOException e){
+            e.printStackTrace();
+            Toast.makeText(HomeScreenActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+        }
+    }
+
     private class DirListHolder extends RecyclerView.ViewHolder {
         public TextView mPathTextView;
         public ImageButton mDeleteButton;
         public ImageButton mSyncButton;
         public String mPath;
+        public String mTag;
 
         public DirListHolder(View itemView) {
             super(itemView);
@@ -306,16 +619,61 @@ public class HomeScreenActivity extends AppCompatActivity {
             mDeleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    decrypt(path);
-                    updateUI();
-                }
-            });
-            mSyncButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(HomeScreenActivity.this);
+                    builder.setTitle("Password protected");
+                    // Set up the input
+                    final EditText input = new EditText(HomeScreenActivity.this);
+                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    builder.setView(input);
 
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String inputPassword = input.getText().toString();
+                            if(verify(inputPassword)) {
+                                decrypt(path);
+                                updateUI();
+                            } else {
+                                Toast.makeText(HomeScreenActivity.this, "Wrong Password!", Toast.LENGTH_SHORT).show();
+                                dialog.cancel();
+                            }
+                        }
+                    });
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    builder.show();
                 }
             });
+            if (new File(mPath).listFiles().length != 0) {
+                if (mTag == null) {
+                    try {
+                        JSONArray jsonArray = JsonUtils.getDirJSONArray(getFilesDir() + "/trans.json");
+                        JSONObject dirEntry;
+                        for (int i = 0; i < jsonArray.length(); ++i) {
+                            dirEntry = jsonArray.getJSONObject(i);
+                            if (dirEntry.getString("original_path").equals(mPath)) {
+                                mTag = dirEntry.getString("tag");
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                mSyncButton.setVisibility(View.VISIBLE);
+                mSyncButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        sync(mPath, mTag);
+                    }
+                });
+            } else {
+                mSyncButton.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

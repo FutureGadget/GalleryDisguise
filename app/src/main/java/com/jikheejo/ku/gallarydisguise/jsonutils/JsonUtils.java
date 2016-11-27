@@ -1,6 +1,9 @@
 package com.jikheejo.ku.gallarydisguise.jsonutils;
 
+import android.util.Log;
+
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -40,9 +43,9 @@ public class JsonUtils {
      * Get JSON Array object of a directory array.
      * @return JSONArray of a directory array.
      */
-    public static JSONArray getDirJSONArray (String path) {
+    public static JSONArray getDirJSONArray (String jsonFilePath) {
         try {
-            JSONObject obj = readJSONObject(path);
+            JSONObject obj = readJSONObject(jsonFilePath);
             if (obj == null) {
                 return new JSONArray();
             } else {
@@ -52,6 +55,42 @@ public class JsonUtils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Finds an Object whose original_path value is srcPath and removes it from the JSONArray and returns it.
+     * @param srcPath original_path
+     * @param objArray Source JSON Array
+     * @return JSONObject
+     * @throws JSONException JSONException
+     */
+    public static JSONObject jsonPopFromArray(String srcPath, JSONArray objArray) throws JSONException{
+        for (int i = 0; i < objArray.length(); ++i) {
+            JSONObject tmpJO = objArray.getJSONObject(i);
+            String dirName = tmpJO.getString("original_path");
+            if (dirName.equals(srcPath)) {
+                objArray.remove(i);
+                return tmpJO;
+            }
+        }
+        return new JSONObject();
+    }
+
+    /**
+     * Returns JSONArray of the tag's fake files
+     * @param jsonFilePath json file path
+     * @param tag encryption tag
+     * @return JSONArray of the tag's fake files
+     * @throws JSONException
+     */
+    public static JSONArray getTagFakeFileArray(String jsonFilePath, String tag) throws JSONException{
+        JSONObject obj = readJSONObject(jsonFilePath);
+        if (obj == null) obj = new JSONObject();
+        if (obj.has(tag)) {
+            return obj.getJSONArray(tag);
+        } else {
+            return new JSONArray();
+        }
     }
 
     /**
