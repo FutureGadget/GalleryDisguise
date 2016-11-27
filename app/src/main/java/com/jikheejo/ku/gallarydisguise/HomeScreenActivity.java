@@ -25,15 +25,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -91,6 +95,70 @@ public class HomeScreenActivity extends AppCompatActivity {
         super.onPause();
         if (homeButtonPressed) {
             finish();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_options, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_changepw:
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(HomeScreenActivity.this);
+                alertDialog.setTitle("Password");
+                final EditText oldPass = new EditText(HomeScreenActivity.this);
+                final EditText newPass = new EditText(HomeScreenActivity.this);
+
+                oldPass.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                newPass.setTransformationMethod(PasswordTransformationMethod.getInstance());
+
+                oldPass.setHint("Old Password");
+                newPass.setHint("New Password");
+                LinearLayout ll=new LinearLayout(HomeScreenActivity.this);
+                ll.setOrientation(LinearLayout.VERTICAL);
+
+                ll.addView(oldPass);
+                ll.addView(newPass);
+                alertDialog.setView(ll);
+                alertDialog.setPositiveButton("Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                SharedPreferences setting = getSharedPreferences("setting", 0);
+                                SharedPreferences.Editor editor = setting.edit();
+                                if (!setting.getBoolean("hasPassword", false)) {
+                                    Toast.makeText(HomeScreenActivity.this, "NO PASSWORD IS SET.", Toast.LENGTH_SHORT).show();
+                                } else if (oldPass.getText().toString().equals("")
+                                        || newPass.getText().toString().equals("")) {
+                                    Toast.makeText(HomeScreenActivity.this, "EMPTY STRING IS NOT ALLOWED", Toast.LENGTH_SHORT).show();
+                                } else if (GenerateKey.encryption(oldPass.getText().toString())
+                                        .equals(setting.getString("password", ""))) {
+                                    editor.putString("password", GenerateKey.encryption(newPass.getText().toString()));
+                                    editor.commit();
+                                    Toast.makeText(HomeScreenActivity.this, "PASSWORD CHANGE COMPLETE!", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                alertDialog.setNegativeButton("No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+                AlertDialog alert11 = alertDialog.create();
+                alert11.show();
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
         }
     }
 
