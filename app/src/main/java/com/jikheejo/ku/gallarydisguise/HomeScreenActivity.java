@@ -48,7 +48,6 @@ import com.jikheejo.ku.gallarydisguise.Encryption.LFSR;
 import com.jikheejo.ku.gallarydisguise.Encryption.Preprocessing;
 import com.jikheejo.ku.gallarydisguise.jsonutils.JsonUtils;
 import com.jikheejo.ku.gallarydisguise.picpath.BackButtonPress;
-import com.jikheejo.ku.gallarydisguise.picpath.PhotoPath;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -66,7 +65,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static android.R.id.list;
 import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 
 public class HomeScreenActivity extends AppCompatActivity {
