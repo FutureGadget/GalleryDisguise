@@ -331,12 +331,6 @@ public class HomeScreenActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = setting.edit();
                     editor.remove(tag+"usingimgnum");
                     editor.commit();
-
-                    // and if the fake directory(tag directory) is empty
-                    File fakeFilesDir = new File(tagDirPath);
-                    if (fakeFilesDir.listFiles().length == 0) {
-                        fakeFilesDir.delete();
-                    }
                 }
 
                 for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
@@ -352,6 +346,12 @@ public class HomeScreenActivity extends AppCompatActivity {
                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + outFile.getAbsolutePath())));
                 }
                 inDir.delete();  // delete encrypted directory (already decrypted)
+
+                // if the fake directory(tag directory) is empty
+                File fakeFilesDir = new File(tagDirPath);
+                if (fakeFilesDir.listFiles().length == 0) {
+                    fakeFilesDir.delete();
+                }
 
                 // JsonUtils.removeDirEntry(dirArray, path);
                 JSONObject jsonObj = new JSONObject();
