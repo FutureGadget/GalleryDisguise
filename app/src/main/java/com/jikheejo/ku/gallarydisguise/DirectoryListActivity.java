@@ -201,9 +201,9 @@ public class DirectoryListActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Integer result) {
-            mPdialog.dismiss();
             Toast.makeText(DirectoryListActivity.this, Integer.toString(result) + " are encrypted.",
                     Toast.LENGTH_SHORT).show();
+            mPdialog.dismiss();
             onBackPressed();
             super.onPostExecute(result);
         }
@@ -294,6 +294,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                         }
 
                         downloadAndSaveImage(imgUrl, tag, originalfilecount, updateimgcount);
+                        publishProgress("progress", Integer.toString(progressCnt), "Downloading images...");
 
                         // TEST ONLY
                         // these files will be excluded (because these are already encrypted files)
@@ -337,13 +338,14 @@ public class DirectoryListActivity extends AppCompatActivity {
 
                     // write out to json file.
                     JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
+                    return taskCnt;
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            return taskCnt;
+            return 0;
         }
     }
 
