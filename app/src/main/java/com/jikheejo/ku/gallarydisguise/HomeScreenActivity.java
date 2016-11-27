@@ -2,6 +2,7 @@ package com.jikheejo.ku.gallarydisguise;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.DialogInterface;
@@ -233,83 +234,138 @@ public class HomeScreenActivity extends AppCompatActivity {
      * Selected paths contains a set of directories that the user wants to decrypt.
      * For each paths, this method decrypts the files in it and moves it to the original directory.
      */
-    private void decrypt(final String path) {
-        SharedPreferences setting = getSharedPreferences("setting", 0);
-        String[] projection = { MediaStore.Images.Media._ID };
-        String selection = MediaStore.Images.Media.DATA + " = ?";
-        try {
-            JSONObject jsonObject = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
-            JSONArray dirArray = jsonObject.getJSONArray("List");
-            JSONObject dirEntryObject = JsonUtils.jsonPopFromArray(path, dirArray);
-            String tag = dirEntryObject.getString("tag");
-            String tagDirPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/" + tag;
-            String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
-            File inDir = new File(outDirPath);          // open the directory
+    private class DecryptProcess extends AsyncTask<Object, String, Integer> {
+        private ProgressDialog mPdialog;
+        @Override
+        protected void onPreExecute() {
+            mPdialog = new ProgressDialog(HomeScreenActivity.this);
+            mPdialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mPdialog.setMessage("Decrypting...");
+            mPdialog.show();
+            super.onPreExecute();
+        }
 
-            // array of file names downloaded from the image server.(fake files created in the encryption process.)
-            JSONArray fakeFilesArray = jsonObject.getJSONArray(tag);
+        @Override
+        protected void onPostExecute(Integer result) {
+            Toast.makeText(HomeScreenActivity.this, Integer.toString(result) + " are decrypted.",
+                    Toast.LENGTH_SHORT).show();
+            updateUI();
+            mPdialog.dismiss();
+            super.onPostExecute(result);
+        }
 
-            /**
-             * Remove files downloaded from the server using ContentResolver.
-             * This method will update the gallery automatically.
-             */
-            for (int i = 0; i < inDir.listFiles().length; ++i) {
-                String fakeFileAbsPath = tagDirPath + "/" + fakeFilesArray.getString(i);
-                String[] selectionArgs = new String[] { fakeFileAbsPath };
-                Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                ContentResolver contentResolver = getContentResolver();
-                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
-                if (c.moveToFirst()) {
-                    // We found the ID. Deleting the item via the content provider will also remove the file
-                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
-                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
-                    contentResolver.delete(deleteUri, null, null);
-                } else {
-                    // File not found in media store DB
+        @Override
+        protected void onProgressUpdate(String... progress) {
+            if (progress[0].equals("progress")) {
+                mPdialog.setProgress(Integer.parseInt(progress[1]));
+                mPdialog.setMessage(progress[2]);
+            } else if (progress[0].equals("max")) {
+                mPdialog.setMax(Integer.parseInt(progress[1]));
+            }
+            super.onProgressUpdate(progress);
+        }
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+            String path = (String)params[0];
+            SharedPreferences setting = getSharedPreferences("setting", 0);
+            String[] projection = { MediaStore.Images.Media._ID };
+            String selection = MediaStore.Images.Media.DATA + " = ?";
+            try {
+                JSONObject jsonObject = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
+                JSONArray dirArray = jsonObject.getJSONArray("List");
+                JSONObject dirEntryObject = JsonUtils.jsonPopFromArray(path, dirArray);
+                String tag = dirEntryObject.getString("tag");
+                String tagDirPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath() + "/" + tag;
+                String outDirPath = getOutDirPath(path);    // get the directory that contains encrypted files
+                File inDir = new File(outDirPath);          // open the directory
+
+                // init progress bar
+                final int taskCnt = inDir.listFiles().length;
+                int progressCnt = 0;
+                publishProgress("max", Integer.toString(taskCnt));
+
+                // array of file names downloaded from the image server.(fake files created in the encryption process.)
+                JSONArray fakeFilesArray = jsonObject.getJSONArray(tag);
+
+                /**
+                 * Remove files downloaded from the server using ContentResolver.
+                 * This method will update the gallery automatically.
+                 */
+            Set<String> removed = new HashSet<>();
+                for (int i = 0; i < inDir.listFiles().length; ++i) {
+                    String fakeFileAbsPath = tagDirPath + "/" + fakeFilesArray.getString(i);
+                    String[] selectionArgs = new String[] { fakeFileAbsPath };
+                    Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    ContentResolver contentResolver = getContentResolver();
+                    Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                    if (c.moveToFirst()) {
+                        // We found the ID. Deleting the item via the content provider will also remove the file
+                        long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                        Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                        contentResolver.delete(deleteUri, null, null);
+                    } else {
+                        // File not found in media store DB
+                    }
+                    c.close();
+                    removed.add(fakeFilesArray.getString(i));
+
+                    // update progress
+                    progressCnt++;
+                    publishProgress("progress", Integer.toString(progressCnt),
+                            "("+Integer.toString(progressCnt)+"/"+Integer.toString(taskCnt)+")");
                 }
-                c.close();
-            }
 
-            for (int i = 0; i < inDir.listFiles().length; ++i) {
-                fakeFilesArray.remove(0); // it works like a queue.
-            }
-
-            if (fakeFilesArray.length() == 0) {
-                // reset tag file number counter
-                // should be reset only when the  becomes zero.
-                SharedPreferences.Editor editor = setting.edit();
-                editor.remove(tag+"usingimgnum");
-                editor.commit();
-
-                File fakeFilesDir = new File(tagDirPath);
-                if (fakeFilesDir.listFiles().length == 0) {
-                    fakeFilesDir.delete();
+                // recreate JSON array based on the deleted fake files.
+                JSONArray newArray = new JSONArray();
+                for (int i = 0; i < fakeFilesArray.length(); ++i) {
+                    if (!removed.contains(fakeFilesArray.getString(i))) {
+                        newArray.put(fakeFilesArray.getString(i));
+                    }
                 }
-            }
 
-            for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
-                final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
-                File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
+                // if all fake files are deleted
+                if (newArray.length() == 0) {
+                    // reset tag file number counter
+                    // should be reset only when the  becomes zero.
+                    SharedPreferences.Editor editor = setting.edit();
+                    editor.remove(tag+"usingimgnum");
+                    editor.commit();
 
-                OutputStream out = new FileOutputStream(outFile);   // open output stream
-                String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", "")); // get key
-                byte[] bytes = LFSR.transform(Preprocessing.byteRead(encryptedFile), key, 8);   // decrypt
-                out.write(bytes);
-                out.close();
-                encryptedFile.delete();
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + outFile.getAbsolutePath())));
-            }
-            inDir.delete();  // delete encrypted directory (already decrypted)
+                    // and if the fake directory(tag directory) is empty
+                    File fakeFilesDir = new File(tagDirPath);
+                    if (fakeFilesDir.listFiles().length == 0) {
+                        fakeFilesDir.delete();
+                    }
+                }
 
-            // JsonUtils.removeDirEntry(dirArray, path);
-            JSONObject jsonObj = new JSONObject();
-            jsonObj.put("List", dirArray);  // Since the decrypted directory entry is already removed when calling "jsonPopFromArray()", no need to update it here.
-            if (fakeFilesArray.length() != 0) {
-                jsonObj.put(tag, fakeFilesArray);
+                for (File encryptedFile : inDir.listFiles()) {  // for each encrypted file
+                    final String decryptedFileName = Preprocessing.fileName_Parse(encryptedFile.getName(), 0);  // base64 decoding
+                    File outFile = new File(path + "/" + decryptedFileName);    // open file to write decrypted contents
+
+                    OutputStream out = new FileOutputStream(outFile);   // open output stream
+                    String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", "")); // get key
+                    byte[] bytes = LFSR.transform(Preprocessing.byteRead(encryptedFile), key, 8);   // decrypt
+                    out.write(bytes);
+                    out.close();
+                    encryptedFile.delete();
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + outFile.getAbsolutePath())));
+                }
+                inDir.delete();  // delete encrypted directory (already decrypted)
+
+                // JsonUtils.removeDirEntry(dirArray, path);
+                JSONObject jsonObj = new JSONObject();
+                jsonObj.put("List", dirArray);  // Since the decrypted directory entry is already removed when calling "jsonPopFromArray()", no need to update it here.
+                if (newArray.length() != 0) {
+                    jsonObj.put(tag, newArray);
+                }
+                JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
+
+                return taskCnt;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
-        } catch (Exception e) {
-            e.printStackTrace();
+            return 0;
         }
     }
 
@@ -398,147 +454,174 @@ public class HomeScreenActivity extends AppCompatActivity {
 
     /**
      * Synchronize unencrypted files in the disguised folder.
-     * @param tag use this tag to download photos from the server.
      */
-    private void sync(String path, String tag) {
-        String[] projection = { MediaStore.Images.Media._ID };
-        String selection = MediaStore.Images.Media.DATA + " = ?";
-        JSONArray objArray;
-        JSONObject obj;
-        SharedPreferences setting = getSharedPreferences("setting", 0);
+    private class SyncProcess extends AsyncTask<Object, String, Integer> {
+        private ProgressDialog mPdialog;
+        @Override
+        protected void onPreExecute() {
+            mPdialog = new ProgressDialog(HomeScreenActivity.this);
+            mPdialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mPdialog.setMessage("Encrypting...");
+            mPdialog.show();
+            super.onPreExecute();
+        }
 
-        try {
-            String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
-            objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
-            JSONArray serverFiles = new JSONArray();
+        @Override
+        protected void onPostExecute(Integer result) {
+            Toast.makeText(HomeScreenActivity.this, Integer.toString(result) + " are encrypted.",
+                    Toast.LENGTH_SHORT).show();
+            updateUI();
+            mPdialog.dismiss();
+            super.onPostExecute(result);
+        }
 
-            File file = new File(path);
+        @Override
+        protected void onProgressUpdate(String... progress) {
+            if (progress[0].equals("progress")) {
+                mPdialog.setProgress(Integer.parseInt(progress[1]));
+                mPdialog.setMessage(progress[2]);
+            } else if (progress[0].equals("max")) {
+                mPdialog.setMax(Integer.parseInt(progress[1]));
+            }
+            super.onProgressUpdate(progress);
+        }
+        @Override
+        protected Integer doInBackground(Object... params) {
+            final int taskCnt = (Integer)params[2];
+            int progressCnt = 0;
+            publishProgress("max", Integer.toString(taskCnt));
 
-            String tagusingimgnum = tag + "usingimgnum";
+            String path = (String)params[0];
+            String tag = (String)params[1];
 
-            int originalfilecount = setting.getInt(tagusingimgnum, 0);
-            int updateimgcount = 0;
+            String[] projection = { MediaStore.Images.Media._ID };
+            String selection = MediaStore.Images.Media.DATA + " = ?";
+            JSONArray objArray;
+            JSONObject obj;
+            SharedPreferences setting = getSharedPreferences("setting", 0);
 
-            // must be declared in final
-            final String dirPath = getFilesDir() + "/" + file.getName() + tag;
-            // File newDir = new File(dirPath);
-            // newDir.mkdir();
+            try {
+                String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
+                objArray = JsonUtils.getDirJSONArray(getFilesDir()+"/trans.json");
+                JSONArray serverFiles = new JSONArray();
 
-            for (File rawFile :file.listFiles()) {
-                updateimgcount++;
-                final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
+                File file = new File(path);
 
-                File outFile = new File(dirPath + "/" + filename);
-                FileOutputStream out = new FileOutputStream(outFile);
+                String tagusingimgnum = tag + "usingimgnum";
 
-                String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", ""));
-                byte[] bytes = LFSR.transform(Preprocessing.byteRead(rawFile), key, 8); // key, tab, revised.
-                out.write(bytes);
-                out.close();
-                rawFile.delete();
-                // record images files downloaded from server.
-                // This information is needed for synchronization function.
+                int originalfilecount = setting.getInt(tagusingimgnum, 0);
+                int updateimgcount = 0;
+
+                // must be declared in final
+                final String dirPath = getFilesDir() + "/" + file.getName() + tag;
+                // File newDir = new File(dirPath);
+                // newDir.mkdir();
+
+                for (File rawFile :file.listFiles()) {
+                    updateimgcount++;
+                    final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
+
+                    File outFile = new File(dirPath + "/" + filename);
+                    FileOutputStream out = new FileOutputStream(outFile);
+
+                    String key = GenerateKey.key_generate(getSharedPreferences("setting", 0).getString("key", ""));
+                    byte[] bytes = LFSR.transform(Preprocessing.byteRead(rawFile), key, 8); // key, tab, revised.
+                    out.write(bytes);
+                    out.close();
+                    rawFile.delete();
+                    // record images files downloaded from server.
+                    // This information is needed for synchronization function.
+
+                    /**
+                     * Remove files from contents resolver.
+                     * This method will update the gallery automatically.
+                     */
+                    String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
+                    Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    ContentResolver contentResolver = getContentResolver();
+                    Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
+                    if (c.moveToFirst()) {
+                        // We found the ID. Deleting the item via the content provider will also remove the file
+                        long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                        Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                        contentResolver.delete(deleteUri, null, null);
+                    } else {
+                        // File not found in media store DB
+                    }
+                    c.close();
+
+                    // Update progress
+                    ++progressCnt;
+                    publishProgress("progress", Integer.toString(progressCnt),
+                            "("+Integer.toString(progressCnt)+"/"+Integer.toString(taskCnt)+")");
+                }
+
+                downloadAndSaveImage(imgUrl, tag, originalfilecount, updateimgcount);
+                publishProgress("progress", Integer.toString(progressCnt), "Downloading images...");
+
+                // TEST ONLY
+                // these files will be excluded (because these are already encrypted files)
+                // when synchronizing a directory.
+                for (int i = 1; i <= updateimgcount; ++i) {
+                    int tmpi = i + originalfilecount;
+                    serverFiles.put(tmpi + ".jpg");
+                }
+
+                updateimgcount = updateimgcount+originalfilecount;
+                SharedPreferences.Editor editor = setting.edit();
+                editor.putInt(tagusingimgnum, updateimgcount);
+                editor.commit();
 
                 /**
-                 * Remove files from contents resolver.
-                 * This method will update the gallery automatically.
+                 * Add a new entry. (Newly encrypted directory information)
+                 * Record the following:
+                 * 1. Original dir path
+                 * 2. Encrypted dir path
+                 * 3. Tag name
                  */
-                String[] selectionArgs = new String[] { rawFile.getAbsolutePath() };
-                Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                ContentResolver contentResolver = getContentResolver();
-                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
-                if (c.moveToFirst()) {
-                    // We found the ID. Deleting the item via the content provider will also remove the file
-                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
-                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
-                    contentResolver.delete(deleteUri, null, null);
-                } else {
-                    // File not found in media store DB
+                JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
+                popped.put("original_path", path);
+                popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
+                popped.put("tag", tag);
+                objArray.put(popped);
+
+                obj = new JSONObject();
+                obj.put("List", objArray);
+
+                // add downloaded fake files to the existing array or create a new list for the tag.
+                JSONArray tagFakeFiles = JsonUtils.getTagFakeFileArray(getFilesDir()+"/trans.json", tag);
+                for (int i = 0; i < serverFiles.length(); ++i) {
+                    tagFakeFiles.put(serverFiles.getString(i));
                 }
-                c.close();
+                obj.put(tag, tagFakeFiles);
+
+                // write out to json file.
+                JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
+                return taskCnt;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            HomeScreenActivity.OpenHttpConnection openHttpConnection = new HomeScreenActivity.OpenHttpConnection();
-            openHttpConnection.execute(imgUrl, tag, originalfilecount, updateimgcount);
-
-            // TEST ONLY
-            // these files will be excluded (because these are already encrypted files)
-            // when synchronizing a directory.
-            for (int i = 1; i <= updateimgcount; ++i) {
-                int tmpi = i + originalfilecount;
-                serverFiles.put(tmpi + ".jpg");
-            }
-
-            updateimgcount = updateimgcount+originalfilecount;
-            SharedPreferences.Editor editor = setting.edit();
-            editor.putInt(tagusingimgnum, updateimgcount);
-            editor.commit();
-
-            /**
-             * Add a new entry. (Newly encrypted directory information)
-             * Record the following:
-             * 1. Original dir path
-             * 2. Encrypted dir path
-             * 3. Tag name
-             */
-            JSONObject popped = JsonUtils.jsonPopFromArray(path, objArray);
-            popped.put("original_path", path);
-            popped.put("out_path", getFilesDir() + "/" + file.getName() + tag);
-            popped.put("tag", tag);
-            objArray.put(popped);
-
-            obj = new JSONObject();
-            obj.put("List", objArray);
-
-            // add downloaded fake files to the existing array or create a new list for the tag.
-            JSONArray tagFakeFiles = JsonUtils.getTagFakeFileArray(getFilesDir()+"/trans.json", tag);
-            for (int i = 0; i < serverFiles.length(); ++i) {
-                tagFakeFiles.put(serverFiles.getString(i));
-            }
-            obj.put(tag, tagFakeFiles);
-
-            // write out to json file.
-            JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            return 0;
         }
     }
 
     //서버에서 이미지 다운
-    private class OpenHttpConnection extends AsyncTask<Object,Void, Bitmap> {
-        Bitmap bmImg;
-
-        @Override
-        protected Bitmap doInBackground(Object... params) {
-            Bitmap mBitmap = null;
-            String url = (String) params[0];
-            String tagname = (String) params[1];
-            int orifico = (int)params[2];
-            int numFIles = (int)params[3];
-
-            InputStream in = null;
-
-            for(int i = 0; i < numFIles; i++){
-                int tmi = (i + orifico)%30 + 1;
-                String tmpurl = url + tagname+"/"+tmi+".jpg";
-                try {
-                    in = new java.net.URL(tmpurl).openStream();
-                    mBitmap = BitmapFactory.decodeStream(in);
-                    ImgSaver(tagname, i + orifico + 1, mBitmap);
-                    in.close();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+    private void downloadAndSaveImage(String url, String tagname, int orifico, int numFIles) {
+        Bitmap mBitmap = null;
+        InputStream in = null;
+        for(int i = 0; i < numFIles; i++){
+            int tmi = (i + orifico)%30 + 1;
+            String tmpurl = url + tagname+"/"+tmi+".jpg";
+            try {
+                in = new java.net.URL(tmpurl).openStream();
+                mBitmap = BitmapFactory.decodeStream(in);
+                ImgSaver(tagname, i + orifico + 1, mBitmap);
+                in.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-            return mBitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bm) {
-            super.onPostExecute(bm);
-            bmImg = bm;
         }
     }
 
@@ -631,8 +714,9 @@ public class HomeScreenActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             String inputPassword = input.getText().toString();
                             if(verify(inputPassword)) {
-                                decrypt(path);
-                                updateUI();
+//                                decrypt(path);
+//                                updateUI();
+                                new DecryptProcess().execute(path);
                             } else {
                                 Toast.makeText(HomeScreenActivity.this, "Wrong Password!", Toast.LENGTH_SHORT).show();
                                 dialog.cancel();
@@ -668,7 +752,7 @@ public class HomeScreenActivity extends AppCompatActivity {
                 mSyncButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        sync(mPath, mTag);
+                        new SyncProcess().execute(mPath, mTag, new File(mPath).listFiles().length);
                     }
                 });
             } else {
