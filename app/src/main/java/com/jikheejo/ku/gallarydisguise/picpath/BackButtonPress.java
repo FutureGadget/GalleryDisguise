@@ -1,11 +1,7 @@
 package com.jikheejo.ku.gallarydisguise.picpath;
 
 import android.app.Activity;
-import android.app.Application;
-import android.content.Intent;
 import android.widget.Toast;
-
-import com.jikheejo.ku.gallarydisguise.FakeHome;
 
 /**
  * Created by daseob on 2016-11-21.

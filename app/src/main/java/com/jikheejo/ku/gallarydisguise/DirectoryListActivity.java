@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -54,6 +55,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jikheejo.ku.gallarydisguise.HomeScreenActivity.RESULT_CLOSE_ALL;
+import static com.jikheejo.ku.gallarydisguise.HomeScreenActivity.RESULT_PASS;
+
 public class DirectoryListActivity extends AppCompatActivity {
     private RecyclerView mDirRecyclerView;
     private DirListAdapter mAdapter;
@@ -64,27 +68,56 @@ public class DirectoryListActivity extends AppCompatActivity {
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
     private SharedPreferences setting;
     private SharedPreferences.Editor editor;
-    private boolean homeButtonPressed;
+    private boolean FAKE_PASS_STATE = false;
+    private boolean[] ADD_BUTTON_PRESSED_STATE = {true, false};
+    private int cnt = 0;
 
     @Override
     public void onResume() {
-        homeButtonPressed = false;
         super.onResume();
-    }
-
-    @Override
-    public void onUserLeaveHint() {
-        homeButtonPressed = true;
-        super.onUserLeaveHint();
+        SharedPreferences settings = getSharedPreferences("setting", 0);
+        if (settings.getBoolean("fake", false)) {
+            Bundle extras = getIntent().getExtras();
+            if (extras != null) {
+                ADD_BUTTON_PRESSED_STATE[0] = extras.getBoolean("ADD_BUTTON_PRESSED", false);
+                getIntent().removeExtra("ADD_BUTTON_PRESSED");
+            }
+            Log.d("ADDBUTTONPRESSED", ADD_BUTTON_PRESSED_STATE[0]+ " " + ADD_BUTTON_PRESSED_STATE[1]+" ");
+            if (!FAKE_PASS_STATE && ADD_BUTTON_PRESSED_STATE[0] && ADD_BUTTON_PRESSED_STATE[1]) {
+                Intent fakeHome = new Intent(DirectoryListActivity.this, FakeScreenActivity.class);
+                startActivityForResult(fakeHome, 0);
+            }
+            ADD_BUTTON_PRESSED_STATE[cnt] = true;
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (homeButtonPressed) {
-            setResult(HomeScreenActivity.RESULT_CLOSE_ALL);
-            finish();
+        FAKE_PASS_STATE = false;
+        cnt = (cnt + 1) % 2;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(resultCode)
+        {
+            case RESULT_CLOSE_ALL:
+                setResult(RESULT_CLOSE_ALL);
+                finish();
+                break;
+            case RESULT_PASS:
+                setResult(RESULT_PASS);
+                FAKE_PASS_STATE = true;
+                break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_PASS);
+        super.onBackPressed();
     }
 
     @Override

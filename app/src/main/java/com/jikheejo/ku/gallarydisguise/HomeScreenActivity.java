@@ -69,28 +69,44 @@ public class HomeScreenActivity extends AppCompatActivity {
     private BackButtonPress backButtonPress;
     private Map<String, Integer> numServerFiles = new HashMap<>();
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
-    private boolean homeButtonPressed;
+//    private boolean homeButtonPressed;
     public static final int RESULT_CLOSE_ALL = 1;
+    public static final int RESULT_PASS = 2;
+    private boolean FAKE_PASS_STATE;
+    private boolean BACK_PRESSED;
 
     @Override
     public void onResume() {
-        homeButtonPressed = false;
-        updateUI();
         super.onResume();
-    }
-
-    @Override
-    public void onUserLeaveHint() {
-        homeButtonPressed = true;
-        super.onUserLeaveHint();
+        SharedPreferences settings = getSharedPreferences("setting", 0);
+        if (settings.getBoolean("fake", false)) {
+            if (!FAKE_PASS_STATE) {
+                Intent fakeHome = new Intent(HomeScreenActivity.this, FakeScreenActivity.class);
+                startActivityForResult(fakeHome, 0);
+            }
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (homeButtonPressed) {
-            finish();
+        FAKE_PASS_STATE = false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(resultCode)
+        {
+            case RESULT_CLOSE_ALL:
+                setResult(RESULT_CLOSE_ALL);
+                finish();
+                break;
+            case RESULT_PASS:
+                setResult(RESULT_PASS);
+                FAKE_PASS_STATE = true;
+                break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -199,14 +215,10 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
         }
 
-        //back button setting
-        backButtonPress = new BackButtonPress(this);
-
         //toggle button setting
         final SharedPreferences setting = getSharedPreferences("setting", 0);
         final SharedPreferences.Editor editor = setting.edit();
         boolean run = setting.getBoolean("fake", false);
-
 
         final Switch tb = (Switch) this.findViewById(R.id.app_Disguise);
         tb.setChecked(run);
@@ -246,9 +258,22 @@ public class HomeScreenActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             finish();
                         }
-                    });
+                    }).setCancelable(false);
             AlertDialog dialog = builder.create();
             dialog.show();
+        }
+
+        /*
+            initial check, generate key if this app is executed for the first time.
+            Use the key to generate the genuine key(through a hidden algorithm) and use it for
+            encryption/decryption.
+         */
+        boolean initialStart = setting.getBoolean("first", true);
+        if (initialStart) {
+            editor.putBoolean("first", false);
+            String key = GenerateKey.randKey();
+            editor.putString("key", key);
+            editor.commit();
         }
 
         // add button behavior
@@ -257,21 +282,10 @@ public class HomeScreenActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(HomeScreenActivity.this, DirectoryListActivity.class);
-                i.addFlags(FLAG_ACTIVITY_NO_USER_ACTION); // Prevents activity lifecycle from calling onUserLeaveHint()
+                i.putExtra("ADD_BUTTON_PRESSED", true);
                 startActivityForResult(i, 0); // Prepares to close this activity on Home button pressed from the DirectoryListActivity
             }
         });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch(resultCode)
-        {
-            case RESULT_CLOSE_ALL:
-                setResult(RESULT_CLOSE_ALL);
-                finish();
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -462,10 +476,10 @@ public class HomeScreenActivity extends AppCompatActivity {
     }
 
     //back button run
-    @Override
-    public void onBackPressed() {
-        backButtonPress.onBackPressed();
-    }
+//    @Override
+//    public void onBackPressed() {
+//        backButtonPress.onBackPressed();
+//    }
 
     // Verify user before executing decryption.
     private boolean verify(String inputPassword) {
