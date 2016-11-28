@@ -78,6 +78,7 @@ public class HomeScreenActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        updateUI();
         SharedPreferences settings = getSharedPreferences("setting", 0);
         if (settings.getBoolean("fake", false)) {
             if (!FAKE_PASS_STATE) {

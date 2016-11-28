@@ -69,33 +69,26 @@ public class DirectoryListActivity extends AppCompatActivity {
     private SharedPreferences setting;
     private SharedPreferences.Editor editor;
     private boolean FAKE_PASS_STATE = false;
-    private boolean[] ADD_BUTTON_PRESSED_STATE = {true, false};
-    private int cnt = 0;
+    private boolean ADD_BUTTON_PRESSED_STATE = false;
 
     @Override
     public void onResume() {
         super.onResume();
         SharedPreferences settings = getSharedPreferences("setting", 0);
         if (settings.getBoolean("fake", false)) {
-            Bundle extras = getIntent().getExtras();
-            if (extras != null) {
-                ADD_BUTTON_PRESSED_STATE[0] = extras.getBoolean("ADD_BUTTON_PRESSED", false);
-                getIntent().removeExtra("ADD_BUTTON_PRESSED");
-            }
-            Log.d("ADDBUTTONPRESSED", ADD_BUTTON_PRESSED_STATE[0]+ " " + ADD_BUTTON_PRESSED_STATE[1]+" ");
-            if (!FAKE_PASS_STATE && ADD_BUTTON_PRESSED_STATE[0] && ADD_BUTTON_PRESSED_STATE[1]) {
+            if (!FAKE_PASS_STATE && !ADD_BUTTON_PRESSED_STATE) {
                 Intent fakeHome = new Intent(DirectoryListActivity.this, FakeScreenActivity.class);
                 startActivityForResult(fakeHome, 0);
             }
-            ADD_BUTTON_PRESSED_STATE[cnt] = true;
         }
+        ADD_BUTTON_PRESSED_STATE = false;
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        Log.d("TEST", "TESTEST");
         FAKE_PASS_STATE = false;
-        cnt = (cnt + 1) % 2;
     }
 
     @Override
@@ -124,6 +117,10 @@ public class DirectoryListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_directory_list);
+
+        // Came to this activity by pressing "Add" button
+        Bundle extras = getIntent().getExtras();
+        ADD_BUTTON_PRESSED_STATE = extras.getBoolean("ADD_BUTTON_PRESSED", false);
 
         // init server file number
         numServerFiles.put("cat", 30);
