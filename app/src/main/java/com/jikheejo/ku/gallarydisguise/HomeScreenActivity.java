@@ -57,6 +57,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -354,6 +355,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             SharedPreferences setting = getSharedPreferences("setting", 0);
             String[] projection = { MediaStore.Images.Media._ID };
             String selection = MediaStore.Images.Media.DATA + " = ?";
+            JSONObject originalJSON = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
             try {
                 JSONObject jsonObject = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
                 JSONArray dirArray = jsonObject.getJSONArray("List");
@@ -442,6 +444,19 @@ public class HomeScreenActivity extends AppCompatActivity {
                 if (newArray.length() != 0) {
                     jsonObj.put(tag, newArray);
                 }
+
+                // recover original tags
+                if (originalJSON != null) {
+                    Iterator<String> keys = originalJSON.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        if (!key.equals("List") && !key.equals(tag)) {
+                            JSONArray tagJsonObject = originalJSON.getJSONArray(key);
+                            jsonObj.put(key, tagJsonObject);
+                        }
+                    }
+                }
+
                 JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), jsonObj);
 
                 return taskCnt;
@@ -582,6 +597,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             JSONArray objArray;
             JSONObject obj;
             SharedPreferences setting = getSharedPreferences("setting", 0);
+            JSONObject originalJSON = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
 
             try {
                 String imgUrl = "https://s3.ap-northeast-2.amazonaws.com/jickheejo/";
@@ -677,6 +693,18 @@ public class HomeScreenActivity extends AppCompatActivity {
                     tagFakeFiles.put(serverFiles.getString(i));
                 }
                 obj.put(tag, tagFakeFiles);
+
+                // recover original tags
+                if (originalJSON != null) {
+                    Iterator<String> keys = originalJSON.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        if (!key.equals("List") && !key.equals(tag)) {
+                            JSONArray tagJsonObject = originalJSON.getJSONArray(key);
+                            obj.put(key, tagJsonObject);
+                        }
+                    }
+                }
 
                 // write out to json file.
                 JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);

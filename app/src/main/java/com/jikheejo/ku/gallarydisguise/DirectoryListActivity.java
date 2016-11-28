@@ -51,6 +51,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -259,6 +260,8 @@ public class DirectoryListActivity extends AppCompatActivity {
             int progressCnt = 0;
             publishProgress("max", Integer.toString(taskCnt));
 
+            JSONObject originalJSON = JsonUtils.readJSONObject(getFilesDir()+"/trans.json");
+
             if (!mSelectedPaths.isEmpty()) {
                 JSONArray objArray;
                 JSONObject obj;
@@ -356,6 +359,7 @@ public class DirectoryListActivity extends AppCompatActivity {
                     for (String rm : removed) {
                         mSelectedPaths.remove(rm);
                     }
+
                     obj = new JSONObject();
                     obj.put("List", objArray);
 
@@ -366,6 +370,17 @@ public class DirectoryListActivity extends AppCompatActivity {
                     }
                     obj.put(tag, tagFakeFiles);
 
+                    // recover original tags
+                    if (originalJSON != null) {
+                        Iterator<String> keys = originalJSON.keys();
+                        while (keys.hasNext()) {
+                            String key = keys.next();
+                            if (!key.equals("List") && !key.equals(tag)) {
+                                JSONArray tagJsonObject = originalJSON.getJSONArray(key);
+                                obj.put(key, tagJsonObject);
+                            }
+                        }
+                    }
                     // write out to json file.
                     JsonUtils.updateJSONObject(openFileOutput("trans.json", MODE_PRIVATE), obj);
                     return taskCnt;
