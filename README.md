@@ -3,6 +3,14 @@ Find me if you can.
 
 https://infosecurityterm.slack.com
 
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt1.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt2.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt3.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt4.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt5.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt6.png)
+ ![](https://github.com/FutureGadget/GalleryDisguise/blob/master/pt7.png)
+ 
 ## Testing
 ###1. Importing Project
 
