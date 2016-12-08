@@ -70,11 +70,9 @@ public class HomeScreenActivity extends AppCompatActivity {
     private BackButtonPress backButtonPress;
     private Map<String, Integer> numServerFiles = new HashMap<>();
     private final int MY_PERMISSIONS_READ_WRITE_EXTERNAL = 1;
-//    private boolean homeButtonPressed;
     public static final int RESULT_CLOSE_ALL = 1;
     public static final int RESULT_PASS = 2;
     private boolean FAKE_PASS_STATE;
-    private boolean BACK_PRESSED;
 
     @Override
     public void onResume() {
@@ -583,6 +581,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
             super.onProgressUpdate(progress);
         }
+        //서버에서 사진 다운 받고 json에 저장
         @Override
         protected Integer doInBackground(Object... params) {
             final int taskCnt = (Integer)params[2];
@@ -608,8 +607,9 @@ public class HomeScreenActivity extends AppCompatActivity {
 
                 String tagusingimgnum = tag + "usingimgnum";
 
+                //이미 encrypt된 파일 개수를 갖고와 서버에서 중복을 피하며 사진을 다운 받는다
                 int originalfilecount = setting.getInt(tagusingimgnum, 0);
-                int updateimgcount = 0;
+                int updateimgcount = 0; //추가로 encrypt될 파일 개수
 
                 // must be declared in final
                 final String dirPath = getFilesDir() + "/" + file.getName() + tag;
@@ -618,8 +618,9 @@ public class HomeScreenActivity extends AppCompatActivity {
 
                 for (File rawFile :file.listFiles()) {
                     updateimgcount++;
+                    //파일 명 encrypt
                     final String filename = Base64.encodeToString(rawFile.getName().getBytes(), Base64.URL_SAFE|Base64.NO_WRAP);
-
+                    //총 파일 경로 저장
                     File outFile = new File(dirPath + "/" + filename);
                     FileOutputStream out = new FileOutputStream(outFile);
 
@@ -658,14 +659,14 @@ public class HomeScreenActivity extends AppCompatActivity {
                 downloadAndSaveImage(imgUrl, tag, originalfilecount, updateimgcount);
                 publishProgress("progress", Integer.toString(progressCnt), "Downloading images...");
 
-                // TEST ONLY
                 // these files will be excluded (because these are already encrypted files)
                 // when synchronizing a directory.
+                // 새로 다운받아질 파일 명 설정
                 for (int i = 1; i <= updateimgcount; ++i) {
                     int tmpi = i + originalfilecount;
                     serverFiles.put(tmpi + ".jpg");
                 }
-
+                //새로 더해진 파일개수까지 더해서 다시 저장
                 updateimgcount = updateimgcount+originalfilecount;
                 SharedPreferences.Editor editor = setting.edit();
                 editor.putInt(tagusingimgnum, updateimgcount);
@@ -724,7 +725,9 @@ public class HomeScreenActivity extends AppCompatActivity {
         InputStream in = null;
         for(int i = 0; i < numFIles; i++){
             int tmi = (i + orifico)%numServerFiles.get(tagname) + 1;
+            //서버에서 이미지를 다운 받기 위해 서버에 저장된 이름으로 변경
             String tmpurl = url + tagname+"/"+tmi+".jpg";
+            //서버에서 이미지 bitmap으로 다운받기
             try {
                 in = new java.net.URL(tmpurl).openStream();
                 mBitmap = BitmapFactory.decodeStream(in);
@@ -735,7 +738,7 @@ public class HomeScreenActivity extends AppCompatActivity {
             }
         }
     }
-
+    //서버에서 다운받은 이미지 컴퓨터에 저장
     private void ImgSaver(String tagname, int filename, Bitmap bmimg) {
         OutputStream outputStream = null;
         String fpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
@@ -757,10 +760,10 @@ public class HomeScreenActivity extends AppCompatActivity {
             // 디렉토리가 존재하지 않으면 디렉토리 생성
             file.mkdirs();
         }
-
+        // 새로 다운받아질 파일 명 설정
         String fn = filename+".jpg";
         File fil = new File(fpath, fn);
-
+        //파일 이름 설정해서 jpeg로 다시 저장
         try{
             Log.i("LSJ", "File check:" + fil.exists());
             if(fil.exists() == false){
@@ -782,6 +785,7 @@ public class HomeScreenActivity extends AppCompatActivity {
                 outputStream.close();
                 Log.i("LSJ", "File check:" + "파일 중복으로 다른 이름 저장");
             }
+            // thumbnail 변경
             sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + fil)));
         } catch(FileNotFoundException e){
             e.printStackTrace();

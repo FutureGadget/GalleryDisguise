@@ -10,8 +10,11 @@ import android.view.ViewConfiguration;
 
 /**
  * Created by daseob on 2016-11-20.
+ * Long Press Checker
+ * 현재는 3초로 시간을 직접 넣어둠
  */
 
+//context 설정
 public class LongPressChecker {
     public interface OnLongPressListner{
         void onLongPressed();
@@ -40,15 +43,17 @@ public class LongPressChecker {
     public void setOnLongPressListner(OnLongPressListner listen){
         mOnLongPressListner = listen;
     }
-
+    // 각 motion에 대한 event 정의
     public  void deliverMotionEvent(View v, MotionEvent even){
         switch (even.getAction()){
+            //로고 터치시 시간 측정
             case MotionEvent.ACTION_DOWN:
                 mTargetView = v;
                 mLastX = even.getX();
                 mLastY = even.getY();
                 startTimeout();
                 break;
+            // 그 외 반응에 시간 측정 중지
             case MotionEvent.ACTION_MOVE:
                 float x = even.getX();
                 float y = even.getY();
@@ -63,12 +68,12 @@ public class LongPressChecker {
                 break;
         }
     }
-
+    //delay값을 3초로 줌
     public void startTimeout(){
         mLongPressed = false;
         mHan.postDelayed(mLongPressCheckRunnable, 3000);
     }
-
+    //call back
     public void stopTimeout(){
         if(!mLongPressed)
             mHan.removeCallbacks(mLongPressCheckRunnable);

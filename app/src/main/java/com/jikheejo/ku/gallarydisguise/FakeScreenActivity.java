@@ -1,6 +1,5 @@
 package com.jikheejo.ku.gallarydisguise;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -36,6 +35,7 @@ public class FakeScreenActivity extends AppCompatActivity {
             }
         });
 
+        //로고에 long press checker 설정
         ImageView iv = (ImageView)findViewById(R.id.fakelogo);
         iv.setOnTouchListener(new View.OnTouchListener() {
             @Override
